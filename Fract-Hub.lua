@@ -224,8 +224,7 @@ Tab_7a054e48:AddDropdown("DifficultyDropdown", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
-local diffMap = { ["Normal"] = 1, ["Hard"] = 2, ["Nightmare"] = 3 }
-getgenv().SelectedDiffNum = diffMap[Value] or 1
+local diffMap = {["Normal"] = 1, ["Hard"] = 2, ["Nightmare"] = 3}; getgenv().SelectedDiffNum = diffMap[Value] or 1
         AutoSave()
     end
 })
@@ -240,46 +239,12 @@ getgenv().IsFriendsOnly = Value
     end
 })
 
-Tab_7a054e48:AddToggle("AutoLobbyToggle", {
+Tab_7a054e48:AddToggle("AutoCreateLobbyToggle", {
     Title = "Auto Create",
     Description = "",
     Default = false,
     Callback = function(Value)
-getgenv().AutoCreateLobby = Value
-
-if Value then
-    task.spawn(function()
-        -- 指定のPlaceIdでのみ動作
-        if game.PlaceId == 100744519298647 then
-            -- 初回のみTPを実行
-            if not getgenv().HasTeleportedToLobby then
-                local player = game.Players.LocalPlayer
-                if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                    player.Character.HumanoidRootPart.CFrame = CFrame.new(411.348358, 117.553619, -160.286285, 0.99995327, 0, 0.00966795254, 0, 1, 0, -0.00966795254, 0, 0.99995327)
-                    getgenv().HasTeleportedToLobby = true
-                    task.wait(1) -- TP後の待機
-                end
-            end
-
-            -- トグルがONかつTP済みの場合にロビー作成リクエストを送信
-            if getgenv().AutoCreateLobby and getgenv().HasTeleportedToLobby then
-                local args = {
-                    {
-                        "Play",
-                        getgenv().SelectedPlayerNum or 1,        -- 設定がない場合はデフォルト値を使用
-                        getgenv().SelectedGameMode or "Default",
-                        getgenv().SelectedMapNum or 1,
-                        getgenv().SelectedDiffNum or 1,
-                        getgenv().IsFriendsOnly or false
-                    },
-                    " "
-                }
-            )
-                game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent:FireServer(unpack(args))
-            end
-        end
-    end)
-end
+if Value then if game.PlaceId == 100744519298647 and not getgenv().HasExecutedLobby then getgenv().HasExecutedLobby = true; local lp = game:GetService("Players").LocalPlayer; if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then lp.Character.HumanoidRootPart.CFrame = CFrame.new(411.348358, 117.553619, -160.286285, 0.99995327, 0, 0.00966795254, 0, 1, 0, -0.00966795254, 0, 0.99995327) end; task.wait(1); local args = { { { "Play", getgenv().SelectedPlayerNum or 1, getgenv().SelectedGameMode or "Default", getgenv().SelectedMapNum or 1, getgenv().SelectedDiffNum or 1, getgenv().IsFriendsOnly or false }, " " } }; game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent"):FireServer(unpack(args)) end end
         AutoSave()
     end
 })
@@ -298,4 +263,3 @@ LoadSettings()
 local function OnClose()
     SaveSettings()
 end
-

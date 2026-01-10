@@ -188,8 +188,7 @@ Tab_7a054e48:AddDropdown("GameModeDropdown", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
-getgenv().LobbySettings = getgenv().LobbySettings or {}
-getgenv().LobbySettings.GameMode = Value
+getgenv().SelectedGameMode = Value
         AutoSave()
     end
 })
@@ -201,8 +200,7 @@ Tab_7a054e48:AddDropdown("PlayerNumDropdown", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
-getgenv().LobbySettings = getgenv().LobbySettings or {}
-getgenv().LobbySettings.PlayerNum = tonumber(Value)
+getgenv().SelectedPlayerNum = tonumber(Value)
         AutoSave()
     end
 })
@@ -214,8 +212,7 @@ Tab_7a054e48:AddDropdown("MapDropdown", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
-getgenv().LobbySettings = getgenv().LobbySettings or {}
-getgenv().LobbySettings.MapNum = tonumber(Value)
+getgenv().SelectedMapNum = tonumber(Value)
         AutoSave()
     end
 })
@@ -227,9 +224,8 @@ Tab_7a054e48:AddDropdown("DifficultyDropdown", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
-getgenv().LobbySettings = getgenv().LobbySettings or {}
-local diffMap = {["Normal"] = 1, ["Hard"] = 2, ["Nightmare"] = 3}
-getgenv().LobbySettings.DiffNum = diffMap[Value] or 1
+local diffMap = { ["Normal"] = 1, ["Hard"] = 2, ["Nightmare"] = 3 }
+getgenv().SelectedDiffNum = diffMap[Value] or 1
         AutoSave()
     end
 })
@@ -239,8 +235,7 @@ Tab_7a054e48:AddToggle("FriendsOnlyToggle", {
     Description = "",
     Default = false,
     Callback = function(Value)
-getgenv().LobbySettings = getgenv().LobbySettings or {}
-getgenv().LobbySettings.FriendsOnly = Value
+getgenv().IsFriendsOnly = Value
         AutoSave()
     end
 })
@@ -250,35 +245,37 @@ Tab_7a054e48:AddToggle("AutoLobbyToggle", {
     Description = "",
     Default = false,
     Callback = function(Value)
-if Value then
-    -- 手順1: 特定プレースIDの場合、一度だけTPを実行
-    if game.PlaceId == 100744519298647 and not getgenv().HasTeleportedLobby then
-        local lp = game.Players.LocalPlayer
-        if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-            lp.Character.HumanoidRootPart.CFrame = CFrame.new(411.348358, 117.553619, -160.286285, 0.99995327, 0, 0.00966795254, 0, 1, 0, -0.00966795254, 0, 0.99995327)
-            getgenv().HasTeleportedLobby = true -- Rejoinまで再実行防止
-        end
-    end
+getgenv().AutoCreateLobby = Value
 
-    -- 手順2: ロビー作成ループ
+if Value then
     task.spawn(function()
-        while Fluent.Options['AutoLobbyToggle'].Value do
-            local settings = getgenv().LobbySettings or {}
-            -- 設定値の読み込み（未設定時はデフォルト値を使用）
-            local args = {
-                {
-                    "Play",
-                    settings.PlayerNum or 1,
-                    settings.GameMode or "Default",
-                    settings.MapNum or 1,
-                    settings.DiffNum or 1,
-                    settings.FriendsOnly or false
-                },
-                " "
-            }
-            
-            game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent:FireServer(unpack(args))
-            task.wait(1) -- ループ間隔
+        -- 指定のPlaceIdでのみ動作
+        if game.PlaceId == 100744519298647 then
+            -- 初回のみTPを実行
+            if not getgenv().HasTeleportedToLobby then
+                local player = game.Players.LocalPlayer
+                if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    player.Character.HumanoidRootPart.CFrame = CFrame.new(411.348358, 117.553619, -160.286285, 0.99995327, 0, 0.00966795254, 0, 1, 0, -0.00966795254, 0, 0.99995327)
+                    getgenv().HasTeleportedToLobby = true
+                    task.wait(1) -- TP後の待機
+                end
+            end
+
+            -- トグルがONかつTP済みの場合にロビー作成リクエストを送信
+            if getgenv().AutoCreateLobby and getgenv().HasTeleportedToLobby then
+                local args = {
+                    {
+                        "Play",
+                        getgenv().SelectedPlayerNum or 1,        -- 設定がない場合はデフォルト値を使用
+                        getgenv().SelectedGameMode or "Default",
+                        getgenv().SelectedMapNum or 1,
+                        getgenv().SelectedDiffNum or 1,
+                        getgenv().IsFriendsOnly or false
+                    },
+                    " "
+                }
+                game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent:FireServer(unpack(args))
+            end
         end
     end)
 end

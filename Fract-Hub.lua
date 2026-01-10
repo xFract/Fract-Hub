@@ -181,94 +181,99 @@ Tabs["tab_main"] = Tab_tab_main
 local Tab_7a054e48 = Window:AddTab({ Title = "Lobby", Icon = "" })
 Tabs["7a054e48"] = Tab_7a054e48
 
-Tab_7a054e48:AddDropdown("LobbyGameMode", {
+Tab_7a054e48:AddDropdown("SelectedGameMode", {
     Title = "Gamemode",
     Description = "",
     Values = {"Default", "Raid", "Endless"},
     Multi = false,
     Default = 1,
     Callback = function(Value)
-getgenv().SelectedGameMode = Value
+-- ValueはFluent.Options['SelectedGameMode'].Valueとしてループ内で参照されます
         AutoSave()
     end
 })
 
-Tab_7a054e48:AddDropdown("LobbyPlayerNum", {
+Tab_7a054e48:AddDropdown("SelectedPlayerNum", {
     Title = "Player Count",
     Description = "",
     Values = {"1", "2", "3", "4"},
     Multi = false,
     Default = 1,
     Callback = function(Value)
-getgenv().SelectedPlayerNum = tonumber(Value)
+-- ValueはFluent.Options['SelectedPlayerNum'].Valueとしてループ内で参照されます
         AutoSave()
     end
 })
 
-Tab_7a054e48:AddDropdown("LobbyMapNum", {
+Tab_7a054e48:AddDropdown("SelectedMapNum", {
     Title = "Map",
     Description = "",
     Values = {"Summon Gate", "Summon Station-1", "Summon Station-2", "Statue`s Cave"},
     Multi = false,
     Default = 1,
     Callback = function(Value)
-getgenv().SelectedMapNum = tonumber(Value)
+-- ValueはFluent.Options['SelectedMapNum'].Valueとしてループ内で参照されます
         AutoSave()
     end
 })
 
-Tab_7a054e48:AddDropdown("LobbyDiffNum", {
+Tab_7a054e48:AddDropdown("SelectedDiffNum", {
     Title = "Difficulty",
     Description = "",
     Values = {"Normal", "Hard", "Nightmare"},
     Multi = false,
     Default = 1,
     Callback = function(Value)
-local diffMap = {Normal = 1, Hard = 2, Nightmare = 3}
-getgenv().SelectedDiffNum = diffMap[Value] or 1
+-- ValueはFluent.Options['SelectedDiffNum'].Valueとしてループ内で参照されます
         AutoSave()
     end
 })
 
-Tab_7a054e48:AddToggle("LobbyFriendsOnly", {
+Tab_7a054e48:AddToggle("IsFriendsOnly", {
     Title = "Friends Only",
     Description = "",
     Default = false,
     Callback = function(Value)
-getgenv().IsFriendsOnly = Value
+-- ValueはFluent.Options['IsFriendsOnly'].Valueとしてループ内で参照されます
         AutoSave()
     end
 })
 
-Tab_7a054e48:AddToggle("AutoCreateLobby", {
+Tab_7a054e48:AddToggle("AutoLobbyToggle", {
     Title = "Auto Create",
     Description = "",
     Default = false,
     Callback = function(Value)
 if game.PlaceId ~= 100744519298647 then return end
+getgenv().AutoLobbyActive = Value
+task.spawn(function()
+    while getgenv().AutoLobbyActive do
+        local opt = Fluent.Options
+        local pNum = tonumber(opt.SelectedPlayerNum.Value) or 1
+        local mode = opt.SelectedGameMode.Value or "Default"
+        local map = tonumber(opt.SelectedMapNum.Value) or 1
+        local diffRaw = opt.SelectedDiffNum.Value
+        local diff = (diffRaw == "Nightmare" and 3) or (diffRaw == "Hard" and 2) or 1
+        local friends = opt.IsFriendsOnly.Value
 
-if Value then
-    task.spawn(function()
-        while Fluent.Options['AutoCreateLobby'].Value do
-            local args = {
-                {
-                    {
-                        "Play",
-                        getgenv().SelectedPlayerNum or 1,
-                        getgenv().SelectedGameMode or "Default",
-                        getgenv().SelectedMapNum or 1,
-                        getgenv().SelectedDiffNum or 1,
-                        getgenv().IsFriendsOnly or false
-                        true
-                    },
-                    " "
-                }
-            }
-            game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent"):FireServer(unpack(args))
-            task.wait(2) -- ロビー作成の連打防止
-        end
-    end)
-end
+        local args = {{
+            {
+                "Play",
+                pNum,
+                mode,
+                map,
+                diff,
+                friends,
+                true
+            },
+            " "
+        }}
+
+        local remote = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
+        remote:FireServer(unpack(args))
+        task.wait(2.5)
+    end
+end)
         AutoSave()
     end
 })

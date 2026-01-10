@@ -181,109 +181,100 @@ Tabs["tab_main"] = Tab_tab_main
 local Tab_7a054e48 = Window:AddTab({ Title = "Lobby", Icon = "" })
 Tabs["7a054e48"] = Tab_7a054e48
 
-Tab_7a054e48:AddDropdown("GameModeDropdown", {
+Tab_7a054e48:AddDropdown("LobbyGameMode", {
     Title = "Gamemode",
     Description = "",
     Values = {"Default", "Raid", "Endless"},
     Multi = false,
     Default = 1,
     Callback = function(Value)
-getgenv().LobbyConfig = getgenv().LobbyConfig or {}
-getgenv().LobbyConfig.GameMode = Value
+getgenv().LobbySettings = getgenv().LobbySettings or {}
+getgenv().LobbySettings.SelectedGameMode = Value
         AutoSave()
     end
 })
 
-Tab_7a054e48:AddDropdown("PlayerNumDropdown", {
+Tab_7a054e48:AddDropdown("LobbyPlayerNum", {
     Title = "Player Count",
     Description = "",
     Values = {"1", "2", "3", "4"},
     Multi = false,
     Default = 1,
     Callback = function(Value)
-getgenv().LobbyConfig = getgenv().LobbyConfig or {}
-getgenv().LobbyConfig.PlayerNum = tonumber(Value)
+getgenv().LobbySettings = getgenv().LobbySettings or {}
+getgenv().LobbySettings.SelectedPlayerNum = tonumber(Value)
         AutoSave()
     end
 })
 
-Tab_7a054e48:AddDropdown("MapDropdown", {
+Tab_7a054e48:AddDropdown("LobbyMap", {
     Title = "Map",
     Description = "",
     Values = {"Summon Gate", "Summon Station-1", "Summon Station-2", "Statue`s Cave"},
     Multi = false,
     Default = 1,
     Callback = function(Value)
-getgenv().LobbyConfig = getgenv().LobbyConfig or {}
-getgenv().LobbyConfig.Map = tonumber(Value)
+getgenv().LobbySettings = getgenv().LobbySettings or {}
+getgenv().LobbySettings.SelectedMapNum = tonumber(Value)
         AutoSave()
     end
 })
 
-Tab_7a054e48:AddDropdown("DifficultyDropdown", {
+Tab_7a054e48:AddDropdown("LobbyDifficulty", {
     Title = "Difficulty",
     Description = "",
     Values = {"Normal", "Hard", "Nightmare"},
     Multi = false,
     Default = 1,
     Callback = function(Value)
-getgenv().LobbyConfig = getgenv().LobbyConfig or {}
-local diffMap = {Normal = 1, Hard = 2, Nightmare = 3}
-getgenv().LobbyConfig.Difficulty = diffMap[Value] or 1
+getgenv().LobbySettings = getgenv().LobbySettings or {}
+local diffMap = { ["Normal"] = 1, ["Hard"] = 2, ["Nightmare"] = 3 }
+getgenv().LobbySettings.SelectedDiffNum = diffMap[Value] or 1
         AutoSave()
     end
 })
 
-Tab_7a054e48:AddToggle("FriendsOnlyToggle", {
+Tab_7a054e48:AddToggle("LobbyFriendsOnly", {
     Title = "Friends Only",
     Description = "",
     Default = false,
     Callback = function(Value)
-getgenv().LobbyConfig = getgenv().LobbyConfig or {}
-getgenv().LobbyConfig.FriendsOnly = Value
+getgenv().LobbySettings = getgenv().LobbySettings or {}
+getgenv().LobbySettings.IsFriendsOnly = Value
         AutoSave()
     end
 })
 
-Tab_7a054e48:AddToggle("AutoCreateLobby", {
+Tab_7a054e48:AddToggle("AutoLobbyToggle", {
     Title = "Auto Create",
     Description = "",
     Default = false,
     Callback = function(Value)
-local PlaceID = 100744519298647
+if game.PlaceId ~= 100744519298647 then return end
 
-if game.PlaceId == PlaceID then
-    task.spawn(function()
-        while Fluent.Options['AutoCreateLobby'].Value do
-            local config = getgenv().LobbyConfig or {}
-            
-            -- 設定値の読み込み（未設定時はデフォルト値を使用）
-            local selectedPlayerNum = config.PlayerNum or 1
-            local selectedGameMode = config.GameMode or "Default"
-            local selectedMapNum = config.Map or 1
-            local selectedDiffNum = config.Difficulty or 1
-            local isFriendsOnly = config.FriendsOnly or false
+local Remote = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
+getgenv().LobbySettings = getgenv().LobbySettings or {}
 
-            local args = {
-                {
-                    {
-                        "Play",
-                        selectedPlayerNum,
-                        selectedGameMode,
-                        selectedMapNum,
-                        selectedDiffNum,
-                        isFriendsOnly
-                    },
-                    " "
-                }
-            }
-
-            game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent"):FireServer(unpack(args))
-            
-            task.wait(1) -- ループ間隔（必要に応じて調整）
-        end
-    end)
-end
+task.spawn(function()
+    while Value and Fluent.Options['AutoLobbyToggle'].Value do
+        local s = getgenv().LobbySettings
+        -- 設定が未選択の場合はデフォルト値を使用
+        local args = {
+            {
+                "Play",
+                s.SelectedPlayerNum or 1,
+                s.SelectedGameMode or "Default",
+                s.SelectedMapNum or 1,
+                s.SelectedDiffNum or 1,
+                s.IsFriendsOnly or false
+            },
+            " "
+        }
+        
+        Remote:FireServer(unpack(args))
+        task.wait(1.5) -- 連打防止のための待機時間
+    end
+end)
         AutoSave()
     end
 })

@@ -150,101 +150,122 @@ local Tab_tab_main = Window:AddTab({ Title = "Main", Icon = "" })
 Tabs["tab_main"] = Tab_tab_main
 local Tab_7a054e48 = Window:AddTab({ Title = "Lobby", Icon = "" })
 Tabs["7a054e48"] = Tab_7a054e48
-Tab_7a054e48:AddDropdown("GameModeDropdown", {
+Tab_7a054e48:AddDropdown("LobbyGameMode", {
     Title = "Gamemode",
     Description = "",
     Values = {"Default", "Raid", "Endless"},
     Multi = false,
     Default = 1,
     Callback = function(Value)
-        getgenv().SelectedGameMode = Value
+        -- GameMode (Default, Raid, Endless)
+        -- Value is automatically stored in Fluent.Options['LobbyGameMode'].Value
+        print("Game Mode Selected:", Value)
         AutoSave()
     end
 })
-Tab_7a054e48:AddDropdown("PlayerNumDropdown", {
+Tab_7a054e48:AddDropdown("LobbyPlayerNum", {
     Title = "Player Count",
     Description = "",
     Values = {"1", "2", "3", "4"},
     Multi = false,
     Default = 1,
     Callback = function(Value)
-        getgenv().SelectedPlayerNum = tonumber(Value)
+        -- PlayerNum (1-4)
+        -- Value is automatically stored in Fluent.Options['LobbyPlayerNum'].Value
+        print("Player Count Selected:", Value)
         AutoSave()
     end
 })
-Tab_7a054e48:AddDropdown("MapDropdown", {
+Tab_7a054e48:AddDropdown("LobbyMap", {
     Title = "Map",
     Description = "",
     Values = {"Summon Gate", "Summon Station-1", "Summon Station-2", "Statue`s Cave"},
     Multi = false,
     Default = 1,
     Callback = function(Value)
-        getgenv().SelectedMapNum = tonumber(Value)
+        -- Map (1-4)
+        -- Value is automatically stored in Fluent.Options['LobbyMap'].Value
+        print("Map Selected:", Value)
         AutoSave()
     end
 })
-Tab_7a054e48:AddDropdown("DifficultyDropdown", {
+Tab_7a054e48:AddDropdown("LobbyDifficulty", {
     Title = "Difficulty",
     Description = "",
     Values = {"Normal", "Hard", "Nightmare"},
     Multi = false,
     Default = 1,
     Callback = function(Value)
-        local diffMap = {["Normal"] = 1, ["Hard"] = 2, ["Nightmare"] = 3}
-        getgenv().SelectedDiffNum = diffMap[Value] or 1
+        -- Difficulty (Normal, Hard, Nightmare)
+        -- Logic to convert string to number is handled in the Main Toggle
+        print("Difficulty Selected:", Value)
         AutoSave()
     end
 })
-Tab_7a054e48:AddToggle("FriendsOnlyToggle", {
+Tab_7a054e48:AddToggle("LobbyFriendsOnly", {
     Title = "Friends Only",
     Description = "",
     Default = false,
     Callback = function(Value)
-        getgenv().IsFriendsOnly = Value
+        -- Friends Only Toggle
+        -- Value is automatically stored in Fluent.Options['LobbyFriendsOnly'].Value
+        print("Friends Only:", Value)
         AutoSave()
     end
 })
-Tab_7a054e48:AddToggle("AutoLobbyToggle", {
+Tab_7a054e48:AddToggle("AutoCreateLobby", {
     Title = "Auto Create",
     Description = "",
     Default = false,
     Callback = function(Value)
+        local Options = Fluent.Options
+        getgenv().AutoCreateLobby = Value
+        -- Place ID Check
         if game.PlaceId ~= 100744519298647 then return end
-        local ReplicatedStorage = game:GetService("ReplicatedStorage")
-        local Event = ReplicatedStorage:WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
-        if Value then
-            -- 手順1: 初期化 (リジョインまで1回のみ)
-            if not getgenv().HasInitializedFakeSignal then
+        task.spawn(function()
+            local RemotePath = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
+            -- Step 1: Initialize (Run once per session)
+            if Value and not getgenv().LobbyInitialized then
                 if firesignal then
-                    firesignal(Event.OnClientEvent, {
+                    firesignal(RemotePath.OnClientEvent, {
                         [" "] = {
                             "UI"
                         }
                     })
                 end
-                getgenv().HasInitializedFakeSignal = true
+                getgenv().LobbyInitialized = true
+                task.wait(1) -- Wait for UI initialization
             end
-            -- 手順2: ロビー作成ループ
-            task.spawn(function()
-                while Fluent.Options['AutoLobbyToggle'].Value do
-                    local args = {
-                        {
-                            "Play",
-                            getgenv().SelectedPlayerNum or 1,
-                            getgenv().SelectedGameMode or "Default",
-                            getgenv().SelectedMapNum or 1,
-                            getgenv().SelectedDiffNum or 1,
-                            getgenv().IsFriendsOnly or false
-                        },
-                        " "
-                    }
-                    Event:FireServer(unpack(args))
-                    task.wait(1) -- サーバー負荷軽減のための待機
-                end
-            end)
+            -- Step 2: Loop to create lobby
+            while getgenv().AutoCreateLobby do
+                -- Gather Values from UI Elements
+                local PNum = tonumber(Options['LobbyPlayerNum'].Value) or 4
+                local GMode = Options['LobbyGameMode'].Value or "Default"
+                local MapNum = tonumber(Options['LobbyMap'].Value) or 1
+                local IsFriends = Options['LobbyFriendsOnly'].Value or false
+                -- Convert Difficulty String to Number
+                local DiffStr = Options['LobbyDifficulty'].Value
+                local DiffNum = 1
+                if DiffStr == "Hard" then DiffNum = 2
+            elseif DiffStr == "Nightmare" then DiffNum = 3
         end
-        AutoSave()
+        -- Fire Server Event
+        RemotePath:FireServer({
+            {
+                "Play",
+                PNum,
+                GMode,
+                MapNum,
+                DiffNum,
+                IsFriends
+            },
+            " "
+        })
+        task.wait(2) -- Retry interval
     end
+end)
+AutoSave()
+end
 })
 Window:SelectTab(1)
 Fluent:Notify({

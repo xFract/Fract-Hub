@@ -240,50 +240,40 @@ getgenv().IsFriendsOnly = Value
     end
 })
 
-Tab_7a054e48:AddToggle("AutoCreateLobbyToggle", {
+Tab_7a054e48:AddToggle("AutoLobbyToggle", {
     Title = "Auto Create",
     Description = "",
     Default = false,
     Callback = function(Value)
-if game.PlaceId ~= 100744519298647 then return end
+getgenv().AutoLobby = Value
 
--- 手順1: 初期化 (セッション中1回のみ)
-if Value and not getgenv().HasLobbyInitialized then
-    local Event = game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent
-    if firesignal then
-        firesignal(Event.OnClientEvent, {
-            [" "] = { "UI" }
-        })
-    end
-    getgenv().HasLobbyInitialized = true
-end
-
--- 手順2: ロビー作成ループ
-getgenv().AutoLobbyActive = Value
 if Value then
     task.spawn(function()
-        local Event = game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent
-        while getgenv().AutoLobbyActive do
-            -- 変数が未設定の場合はデフォルト値を使用
-            local pNum = getgenv().SelectedPlayerNum or 1
-            local mode = getgenv().SelectedGameMode or "Default"
-            local mapNum = getgenv().SelectedMapNum or 1
-            local diff = getgenv().SelectedDiffNum or 1
-            local friends = getgenv().IsFriendsOnly or false
+        -- 手順1: 初期化 (PlaceId一致かつ未実行の場合のみ1回実行)
+        if game.PlaceId == 100744519298647 and not getgenv().LobbyInitialized then
+            local Event = game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent
+            if firesignal then
+                firesignal(Event.OnClientEvent, { [" "] = { "UI" } })
+                getgenv().LobbyInitialized = true
+                task.wait(0.5)
+            end
+        end
 
-            -- ロビー作成リクエスト
+        -- 手順2: ロビー作成ループ (トグルがONの間実行)
+        while Fluent.Options['AutoLobbyToggle'].Value and game.PlaceId == 100744519298647 do
+            local Event = game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent
             Event:FireServer({
                 {
                     "Play",
-                    pNum,
-                    mode,
-                    mapNum,
-                    diff,
-                    friends
+                    getgenv().SelectedPlayerNum or 1,
+                    getgenv().SelectedGameMode or "Default",
+                    getgenv().SelectedMapNum or 1,
+                    getgenv().SelectedDiffNum or 1,
+                    getgenv().IsFriendsOnly or false,
                 },
                 " "
             })
-            task.wait(2) -- 連打防止用ウェイト
+            task.wait(1) -- 過剰なリクエストを防ぐための待機
         end
     end)
 end

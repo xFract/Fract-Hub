@@ -188,7 +188,8 @@ Tab_7a054e48:AddDropdown("GameModeDropdown", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
-getgenv().SelectedGameMode = Value
+getgenv().LobbyConfig = getgenv().LobbyConfig or {}
+getgenv().LobbyConfig.GameMode = Value
         AutoSave()
     end
 })
@@ -200,7 +201,8 @@ Tab_7a054e48:AddDropdown("PlayerNumDropdown", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
-getgenv().SelectedPlayerNum = tonumber(Value)
+getgenv().LobbyConfig = getgenv().LobbyConfig or {}
+getgenv().LobbyConfig.PlayerNum = tonumber(Value)
         AutoSave()
     end
 })
@@ -212,7 +214,8 @@ Tab_7a054e48:AddDropdown("MapDropdown", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
-getgenv().SelectedMapNum = tonumber(Value)
+getgenv().LobbyConfig = getgenv().LobbyConfig or {}
+getgenv().LobbyConfig.Map = tonumber(Value)
         AutoSave()
     end
 })
@@ -224,7 +227,9 @@ Tab_7a054e48:AddDropdown("DifficultyDropdown", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
-local diffMap = {["Normal"] = 1, ["Hard"] = 2, ["Nightmare"] = 3}; getgenv().SelectedDiffNum = diffMap[Value] or 1
+getgenv().LobbyConfig = getgenv().LobbyConfig or {}
+local diffMap = {Normal = 1, Hard = 2, Nightmare = 3}
+getgenv().LobbyConfig.Difficulty = diffMap[Value] or 1
         AutoSave()
     end
 })
@@ -234,17 +239,51 @@ Tab_7a054e48:AddToggle("FriendsOnlyToggle", {
     Description = "",
     Default = false,
     Callback = function(Value)
-getgenv().IsFriendsOnly = Value
+getgenv().LobbyConfig = getgenv().LobbyConfig or {}
+getgenv().LobbyConfig.FriendsOnly = Value
         AutoSave()
     end
 })
 
-Tab_7a054e48:AddToggle("AutoCreateLobbyToggle", {
+Tab_7a054e48:AddToggle("AutoCreateLobby", {
     Title = "Auto Create",
     Description = "",
     Default = false,
     Callback = function(Value)
-if Value then if game.PlaceId == 100744519298647 and not getgenv().HasExecutedLobby then getgenv().HasExecutedLobby = true; local lp = game:GetService("Players").LocalPlayer; if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then lp.Character.HumanoidRootPart.CFrame = CFrame.new(411.348358, 117.553619, -160.286285, 0.99995327, 0, 0.00966795254, 0, 1, 0, -0.00966795254, 0, 0.99995327) end; task.wait(1); local args = { { { "Play", getgenv().SelectedPlayerNum or 1, getgenv().SelectedGameMode or "Default", getgenv().SelectedMapNum or 1, getgenv().SelectedDiffNum or 1, getgenv().IsFriendsOnly or false }, " " } }; game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent"):FireServer(unpack(args)) end end
+local PlaceID = 100744519298647
+
+if game.PlaceId == PlaceID then
+    task.spawn(function()
+        while Fluent.Options['AutoCreateLobby'].Value do
+            local config = getgenv().LobbyConfig or {}
+            
+            -- 設定値の読み込み（未設定時はデフォルト値を使用）
+            local selectedPlayerNum = config.PlayerNum or 1
+            local selectedGameMode = config.GameMode or "Default"
+            local selectedMapNum = config.Map or 1
+            local selectedDiffNum = config.Difficulty or 1
+            local isFriendsOnly = config.FriendsOnly or false
+
+            local args = {
+                {
+                    {
+                        "Play",
+                        selectedPlayerNum,
+                        selectedGameMode,
+                        selectedMapNum,
+                        selectedDiffNum,
+                        isFriendsOnly
+                    },
+                    " "
+                }
+            }
+
+            game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent"):FireServer(unpack(args))
+            
+            task.wait(1) -- ループ間隔（必要に応じて調整）
+        end
+    end)
+end
         AutoSave()
     end
 })

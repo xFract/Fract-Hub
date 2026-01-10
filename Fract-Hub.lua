@@ -188,7 +188,7 @@ Tab_7a054e48:AddDropdown("SelectedGameMode", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
--- ValueはFluent.Options['SelectedGameMode'].Valueとしてループ内で参照されます
+print("Game Mode Selected:", Value)
         AutoSave()
     end
 })
@@ -200,7 +200,7 @@ Tab_7a054e48:AddDropdown("SelectedPlayerNum", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
--- ValueはFluent.Options['SelectedPlayerNum'].Valueとしてループ内で参照されます
+print("Player Count Selected:", Value)
         AutoSave()
     end
 })
@@ -212,7 +212,7 @@ Tab_7a054e48:AddDropdown("SelectedMapNum", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
--- ValueはFluent.Options['SelectedMapNum'].Valueとしてループ内で参照されます
+print("Map Selected:", Value)
         AutoSave()
     end
 })
@@ -224,7 +224,7 @@ Tab_7a054e48:AddDropdown("SelectedDiffNum", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
--- ValueはFluent.Options['SelectedDiffNum'].Valueとしてループ内で参照されます
+print("Difficulty Selected:", Value)
         AutoSave()
     end
 })
@@ -234,7 +234,7 @@ Tab_7a054e48:AddToggle("IsFriendsOnly", {
     Description = "",
     Default = false,
     Callback = function(Value)
--- ValueはFluent.Options['IsFriendsOnly'].Valueとしてループ内で参照されます
+print("Friends Only Toggled:", Value)
         AutoSave()
     end
 })
@@ -244,36 +244,46 @@ Tab_7a054e48:AddToggle("AutoLobbyToggle", {
     Description = "",
     Default = false,
     Callback = function(Value)
+local remote = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
+local diffMap = { ["Normal"] = 1, ["Hard"] = 2, ["Nightmare"] = 3 }
+
+-- PlaceId Check
 if game.PlaceId ~= 100744519298647 then return end
-getgenv().AutoLobbyActive = Value
-task.spawn(function()
-    while getgenv().AutoLobbyActive do
-        local opt = Fluent.Options
-        local pNum = tonumber(opt.SelectedPlayerNum.Value) or 1
-        local mode = opt.SelectedGameMode.Value or "Default"
-        local map = tonumber(opt.SelectedMapNum.Value) or 1
-        local diffRaw = opt.SelectedDiffNum.Value
-        local diff = (diffRaw == "Nightmare" and 3) or (diffRaw == "Hard" and 2) or 1
-        local friends = opt.IsFriendsOnly.Value
 
-        local args = {{
-            {
-                "Play",
-                pNum,
-                mode,
-                map,
-                diff,
-                friends,
-                true
-            },
-            " "
-        }}
+if Value then
+    task.spawn(function()
+        while Fluent.Options['AutoLobbyToggle'].Value do
+            -- Fetch current values from UI Options
+            local pNum = tonumber(Fluent.Options['SelectedPlayerNum'].Value) or 1
+            local gMode = Fluent.Options['SelectedGameMode'].Value or "Default"
+            local mNum = tonumber(Fluent.Options['SelectedMapNum'].Value) or 1
+            
+            local rawDiff = Fluent.Options['SelectedDiffNum'].Value
+            local dNum = diffMap[rawDiff] or 1
+            
+            local fOnly = Fluent.Options['IsFriendsOnly'].Value
 
-        local remote = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
-        remote:FireServer(unpack(args))
-        task.wait(2.5)
-    end
-end)
+            -- Construct BridgeNet2 packet structure
+            local args = {
+                {
+                    {
+                        "Play",    -- Action
+                        pNum,      -- SelectedPlayerNum
+                        gMode,     -- SelectedGameMode
+                        mNum,      -- SelectedMapNum
+                        dNum,      -- SelectedDiffNum
+                        fOnly,     -- IsFriendsOnly
+                        true       -- Validation Flag
+                    },
+                    " " -- BridgeNet2 Identifier
+                }
+            }
+
+            remote:FireServer(unpack(args))
+            task.wait(2.5)
+        end
+    end)
+end
         AutoSave()
     end
 })

@@ -259,6 +259,7 @@ if Value then
                         getgenv().SelectedMapNum or 1,
                         getgenv().SelectedDiffNum or 1,
                         getgenv().IsFriendsOnly or false
+                        true
                     },
                     " "
                 }

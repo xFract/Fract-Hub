@@ -274,6 +274,7 @@ if Value then
                     },
                     " "
                 }
+            )
                 game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent:FireServer(unpack(args))
             end
         end
@@ -297,3 +298,4 @@ LoadSettings()
 local function OnClose()
     SaveSettings()
 end
+

@@ -188,7 +188,8 @@ Tab_7a054e48:AddDropdown("GameModeDropdown", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
-getgenv().SelectedGameMode = Value
+getgenv().LobbySettings = getgenv().LobbySettings or {}
+getgenv().LobbySettings.GameMode = Value
         AutoSave()
     end
 })
@@ -200,7 +201,8 @@ Tab_7a054e48:AddDropdown("PlayerNumDropdown", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
-getgenv().SelectedPlayerNum = tonumber(Value)
+getgenv().LobbySettings = getgenv().LobbySettings or {}
+getgenv().LobbySettings.PlayerNum = tonumber(Value)
         AutoSave()
     end
 })
@@ -212,7 +214,8 @@ Tab_7a054e48:AddDropdown("MapDropdown", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
-getgenv().SelectedMapNum = tonumber(Value)
+getgenv().LobbySettings = getgenv().LobbySettings or {}
+getgenv().LobbySettings.MapNum = tonumber(Value)
         AutoSave()
     end
 })
@@ -224,8 +227,9 @@ Tab_7a054e48:AddDropdown("DifficultyDropdown", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
-local diffMap = { ["Normal"] = 1, ["Hard"] = 2, ["Nightmare"] = 3 }
-getgenv().SelectedDiffNum = diffMap[Value] or 1
+getgenv().LobbySettings = getgenv().LobbySettings or {}
+local diffMap = {["Normal"] = 1, ["Hard"] = 2, ["Nightmare"] = 3}
+getgenv().LobbySettings.DiffNum = diffMap[Value] or 1
         AutoSave()
     end
 })
@@ -235,7 +239,8 @@ Tab_7a054e48:AddToggle("FriendsOnlyToggle", {
     Description = "",
     Default = false,
     Callback = function(Value)
-getgenv().IsFriendsOnly = Value
+getgenv().LobbySettings = getgenv().LobbySettings or {}
+getgenv().LobbySettings.FriendsOnly = Value
         AutoSave()
     end
 })
@@ -245,35 +250,35 @@ Tab_7a054e48:AddToggle("AutoLobbyToggle", {
     Description = "",
     Default = false,
     Callback = function(Value)
-getgenv().AutoLobby = Value
-
 if Value then
-    task.spawn(function()
-        -- 手順1: 初期化 (PlaceId一致かつ未実行の場合のみ1回実行)
-        if game.PlaceId == 100744519298647 and not getgenv().LobbyInitialized then
-            local Event = game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent
-            if firesignal then
-                firesignal(Event.OnClientEvent, { [" "] = { "UI" } })
-                getgenv().LobbyInitialized = true
-                task.wait(0.5)
-            end
+    -- 手順1: 特定プレースIDの場合、一度だけTPを実行
+    if game.PlaceId == 100744519298647 and not getgenv().HasTeleportedLobby then
+        local lp = game.Players.LocalPlayer
+        if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+            lp.Character.HumanoidRootPart.CFrame = CFrame.new(411.348358, 117.553619, -160.286285, 0.99995327, 0, 0.00966795254, 0, 1, 0, -0.00966795254, 0, 0.99995327)
+            getgenv().HasTeleportedLobby = true -- Rejoinまで再実行防止
         end
+    end
 
-        -- 手順2: ロビー作成ループ (トグルがONの間実行)
-        while Fluent.Options['AutoLobbyToggle'].Value and game.PlaceId == 100744519298647 do
-            local Event = game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent
-            Event:FireServer({
+    -- 手順2: ロビー作成ループ
+    task.spawn(function()
+        while Fluent.Options['AutoLobbyToggle'].Value do
+            local settings = getgenv().LobbySettings or {}
+            -- 設定値の読み込み（未設定時はデフォルト値を使用）
+            local args = {
                 {
                     "Play",
-                    getgenv().SelectedPlayerNum or 1,
-                    getgenv().SelectedGameMode or "Default",
-                    getgenv().SelectedMapNum or 1,
-                    getgenv().SelectedDiffNum or 1,
-                    getgenv().IsFriendsOnly or false,
+                    settings.PlayerNum or 1,
+                    settings.GameMode or "Default",
+                    settings.MapNum or 1,
+                    settings.DiffNum or 1,
+                    settings.FriendsOnly or false
                 },
                 " "
-            })
-            task.wait(1) -- 過剰なリクエストを防ぐための待機
+            }
+            
+            game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent:FireServer(unpack(args))
+            task.wait(1) -- ループ間隔
         end
     end)
 end

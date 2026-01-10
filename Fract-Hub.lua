@@ -224,7 +224,7 @@ Tab_7a054e48:AddDropdown("DifficultyDropdown", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
-local diffMap = {["Normal"] = 1, ["Hard"] = 2, ["Nightmare"] = 3}
+local diffMap = { ["Normal"] = 1, ["Hard"] = 2, ["Nightmare"] = 3 }
 getgenv().SelectedDiffNum = diffMap[Value] or 1
         AutoSave()
     end
@@ -240,43 +240,50 @@ getgenv().IsFriendsOnly = Value
     end
 })
 
-Tab_7a054e48:AddToggle("StartLobbyToggle", {
+Tab_7a054e48:AddToggle("AutoCreateLobbyToggle", {
     Title = "Auto Create",
     Description = "",
     Default = false,
     Callback = function(Value)
 if game.PlaceId ~= 100744519298647 then return end
 
-local BridgeNet = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
-
--- 手順1: 初期化 (Rejoinまで1回のみ実行)
-if Value and not getgenv().LobbyInitialized then
+-- 手順1: 初期化 (セッション中1回のみ)
+if Value and not getgenv().HasLobbyInitialized then
+    local Event = game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent
     if firesignal then
-        firesignal(BridgeNet.OnClientEvent, {
+        firesignal(Event.OnClientEvent, {
             [" "] = { "UI" }
         })
-        getgenv().LobbyInitialized = true
     end
+    getgenv().HasLobbyInitialized = true
 end
 
--- 手順2: ロビー作成リクエスト (トグルON中ループ)
+-- 手順2: ロビー作成ループ
+getgenv().AutoLobbyActive = Value
 if Value then
     task.spawn(function()
-        while Fluent.Options['StartLobbyToggle'].Value do
-            local args = {
+        local Event = game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent
+        while getgenv().AutoLobbyActive do
+            -- 変数が未設定の場合はデフォルト値を使用
+            local pNum = getgenv().SelectedPlayerNum or 1
+            local mode = getgenv().SelectedGameMode or "Default"
+            local mapNum = getgenv().SelectedMapNum or 1
+            local diff = getgenv().SelectedDiffNum or 1
+            local friends = getgenv().IsFriendsOnly or false
+
+            -- ロビー作成リクエスト
+            Event:FireServer({
                 {
                     "Play",
-                    getgenv().SelectedPlayerNum or 1,
-                    getgenv().SelectedGameMode or "Default",
-                    getgenv().SelectedMapNum or 1,
-                    getgenv().SelectedDiffNum or 1,
-                    getgenv().IsFriendsOnly or false,
+                    pNum,
+                    mode,
+                    mapNum,
+                    diff,
+                    friends
                 },
                 " "
-            }
-            
-            BridgeNet:FireServer(unpack(args))
-            task.wait(1) -- 連打防止のため待機
+            })
+            task.wait(2) -- 連打防止用ウェイト
         end
     end)
 end

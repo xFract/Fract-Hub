@@ -181,106 +181,117 @@ Tabs["tab_main"] = Tab_tab_main
 local Tab_7a054e48 = Window:AddTab({ Title = "Lobby", Icon = "" })
 Tabs["7a054e48"] = Tab_7a054e48
 
-Tab_7a054e48:AddDropdown("SelectedGameMode", {
+Tab_7a054e48:AddDropdown("GameModeDropdown", {
     Title = "Gamemode",
     Description = "",
     Values = {"Default", "Raid", "Endless"},
     Multi = false,
     Default = 1,
     Callback = function(Value)
-print("Game Mode Selected:", Value)
+-- 値はFluent.Options['GameModeDropdown'].Valueを利用します
+print('Game Mode Selected:', Value)
         AutoSave()
     end
 })
 
-Tab_7a054e48:AddDropdown("SelectedPlayerNum", {
+Tab_7a054e48:AddDropdown("PlayerNumDropdown", {
     Title = "Player Count",
     Description = "",
     Values = {"1", "2", "3", "4"},
     Multi = false,
     Default = 1,
     Callback = function(Value)
-print("Player Count Selected:", Value)
+-- 値はFluent.Options['PlayerNumDropdown'].Valueを利用します
+print('Player Num Selected:', Value)
         AutoSave()
     end
 })
 
-Tab_7a054e48:AddDropdown("SelectedMapNum", {
+Tab_7a054e48:AddDropdown("MapDropdown", {
     Title = "Map",
     Description = "",
     Values = {"Summon Gate", "Summon Station-1", "Summon Station-2", "Statue`s Cave"},
     Multi = false,
     Default = 1,
     Callback = function(Value)
-print("Map Selected:", Value)
+-- 値はFluent.Options['MapDropdown'].Valueを利用します
+print('Map Selected:', Value)
         AutoSave()
     end
 })
 
-Tab_7a054e48:AddDropdown("SelectedDiffNum", {
+Tab_7a054e48:AddDropdown("DiffDropdown", {
     Title = "Difficulty",
     Description = "",
     Values = {"Normal", "Hard", "Nightmare"},
     Multi = false,
     Default = 1,
     Callback = function(Value)
-print("Difficulty Selected:", Value)
+-- 値はFluent.Options['DiffDropdown'].Valueを利用します
+print('Difficulty Selected:', Value)
         AutoSave()
     end
 })
 
-Tab_7a054e48:AddToggle("IsFriendsOnly", {
+Tab_7a054e48:AddToggle("FriendsOnlyToggle", {
     Title = "Friends Only",
     Description = "",
     Default = false,
     Callback = function(Value)
-print("Friends Only Toggled:", Value)
+-- 値はFluent.Options['FriendsOnlyToggle'].Valueを利用します
+print('Friends Only:', Value)
         AutoSave()
     end
 })
 
-Tab_7a054e48:AddToggle("AutoLobbyToggle", {
+Tab_7a054e48:AddToggle("AutoCreateLobbyToggle", {
     Title = "Auto Create",
     Description = "",
     Default = false,
     Callback = function(Value)
-local remote = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
-local diffMap = { ["Normal"] = 1, ["Hard"] = 2, ["Nightmare"] = 3 }
-
--- PlaceId Check
-if game.PlaceId ~= 100744519298647 then return end
+local PlaceID = 100744519298647
+if game.PlaceId ~= PlaceID then return end
 
 if Value then
+    local Remote = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
+    
+    -- 【手順1】初期化 (トグルON時に1回実行)
+    firesignal(Remote.OnClientEvent, {
+        [" "] = {
+            [1] = "UI",
+        },
+    })
+
+    -- 【手順2】ロビー作成ループ
     task.spawn(function()
-        while Fluent.Options['AutoLobbyToggle'].Value do
-            -- Fetch current values from UI Options
-            local pNum = tonumber(Fluent.Options['SelectedPlayerNum'].Value) or 1
-            local gMode = Fluent.Options['SelectedGameMode'].Value or "Default"
-            local mNum = tonumber(Fluent.Options['SelectedMapNum'].Value) or 1
+        while Fluent.Options['AutoCreateLobbyToggle'].Value do
+            -- 各設定値の取得と変換
+            local playerNum = tonumber(Fluent.Options['PlayerNumDropdown'].Value) or 1
+            local gameMode = Fluent.Options['GameModeDropdown'].Value or "Default"
+            local mapNum = tonumber(Fluent.Options['MapDropdown'].Value) or 1
             
-            local rawDiff = Fluent.Options['SelectedDiffNum'].Value
-            local dNum = diffMap[rawDiff] or 1
+            -- 難易度の文字列を数値に変換
+            local diffStr = Fluent.Options['DiffDropdown'].Value or "Normal"
+            local diffTable = {Normal = 1, Hard = 2, Nightmare = 3}
+            local diffNum = diffTable[diffStr] or 1
             
-            local fOnly = Fluent.Options['IsFriendsOnly'].Value
+            local isFriendsOnly = Fluent.Options['FriendsOnlyToggle'].Value or false
 
-            -- Construct BridgeNet2 packet structure
-            local args = {
-                {
-                    {
-                        "Play",    -- Action
-                        pNum,      -- SelectedPlayerNum
-                        gMode,     -- SelectedGameMode
-                        mNum,      -- SelectedMapNum
-                        dNum,      -- SelectedDiffNum
-                        fOnly,     -- IsFriendsOnly
-                        true       -- Validation Flag
-                    },
-                    " " -- BridgeNet2 Identifier
-                }
-            }
-
-            remote:FireServer(unpack(args))
-            task.wait(2.5)
+            -- サーバーへ送信
+            Remote:FireServer({
+                [1] = {
+                    [1] = "Play",
+                    [2] = playerNum,
+                    [3] = gameMode,
+                    [4] = mapNum,
+                    [5] = diffNum,
+                    [6] = isFriendsOnly,
+                    [7] = true,
+                },
+                [2] = " ",
+            })
+            
+            task.wait(1) -- 連打防止のため待機時間を設定
         end
     end)
 end

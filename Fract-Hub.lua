@@ -188,8 +188,9 @@ Tab_7a054e48:AddDropdown("GameModeDropdown", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
--- 値はFluent.Options['GameModeDropdown'].Valueを利用します
-print('Game Mode Selected:', Value)
+local function OnGamemodeChanged(value)
+    SelectedGameMode = value
+end
         AutoSave()
     end
 })
@@ -201,8 +202,9 @@ Tab_7a054e48:AddDropdown("PlayerNumDropdown", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
--- 値はFluent.Options['PlayerNumDropdown'].Valueを利用します
-print('Player Num Selected:', Value)
+local function OnPlayerCountChanged(value)
+    SelectedPlayerCount = tonumber(value) or 1
+end
         AutoSave()
     end
 })
@@ -214,8 +216,9 @@ Tab_7a054e48:AddDropdown("MapDropdown", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
--- 値はFluent.Options['MapDropdown'].Valueを利用します
-print('Map Selected:', Value)
+local function OnMapChanged(value)
+    SelectedMap = tonumber(value) or 1
+end
         AutoSave()
     end
 })
@@ -227,8 +230,9 @@ Tab_7a054e48:AddDropdown("DiffDropdown", {
     Multi = false,
     Default = 1,
     Callback = function(Value)
--- 値はFluent.Options['DiffDropdown'].Valueを利用します
-print('Difficulty Selected:', Value)
+local function OnDifficultyChanged(value)
+    SelectedDifficulty = DIFF_MAP[value] or 1
+end
         AutoSave()
     end
 })
@@ -238,8 +242,9 @@ Tab_7a054e48:AddToggle("FriendsOnlyToggle", {
     Description = "",
     Default = false,
     Callback = function(Value)
--- 値はFluent.Options['FriendsOnlyToggle'].Valueを利用します
-print('Friends Only:', Value)
+local function OnFriendsOnlyChanged(value)
+    IsFriendsOnly = value
+end
         AutoSave()
     end
 })
@@ -249,52 +254,38 @@ Tab_7a054e48:AddToggle("AutoCreateLobbyToggle", {
     Description = "",
     Default = false,
     Callback = function(Value)
-local PlaceID = 100744519298647
-if game.PlaceId ~= PlaceID then return end
+task.spawn(function()
+    while true do
+        -- AutoCreateLobbyToggleの状態を確認
+        local autoCreateEnabled = false
+        pcall(function()
+            autoCreateEnabled = Fluent.Options.AutoCreateLobbyToggle.Value
+        end)
 
-if Value then
-    local Remote = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
-    
-    -- 【手順1】初期化 (トグルON時に1回実行)
-    firesignal(Remote.OnClientEvent, {
-        [" "] = {
-            [1] = "UI",
-        },
-    })
-
-    -- 【手順2】ロビー作成ループ
-    task.spawn(function()
-        while Fluent.Options['AutoCreateLobbyToggle'].Value do
-            -- 各設定値の取得と変換
-            local playerNum = tonumber(Fluent.Options['PlayerNumDropdown'].Value) or 1
-            local gameMode = Fluent.Options['GameModeDropdown'].Value or "Default"
-            local mapNum = tonumber(Fluent.Options['MapDropdown'].Value) or 1
-            
-            -- 難易度の文字列を数値に変換
-            local diffStr = Fluent.Options['DiffDropdown'].Value or "Normal"
-            local diffTable = {Normal = 1, Hard = 2, Nightmare = 3}
-            local diffNum = diffTable[diffStr] or 1
-            
-            local isFriendsOnly = Fluent.Options['FriendsOnlyToggle'].Value or false
-
-            -- サーバーへ送信
-            Remote:FireServer({
+        if autoCreateEnabled then
+            -- Hydroxideのログに基づいた正確なパケット構造
+            -- 1つのテーブル内に[1]=データ、[2]=識別子を格納
+            local payload = {
                 [1] = {
-                    [1] = "Play",
-                    [2] = playerNum,
-                    [3] = gameMode,
-                    [4] = mapNum,
-                    [5] = diffNum,
-                    [6] = isFriendsOnly,
-                    [7] = true,
+                    "Play",
+                    SelectedPlayerCount,
+                    SelectedGameMode,
+                    SelectedMap,
+                    SelectedDifficulty,
+                    IsFriendsOnly,
+                    true -- Confirmation Flag
                 },
-                [2] = " ",
-            })
-            
-            task.wait(1) -- 連打防止のため待機時間を設定
+                [2] = " " -- BridgeNet2 Identifier
+            }
+
+            -- 通信実行（unpackせずテーブルをそのまま送信）
+            Remote:FireServer(payload)
         end
-    end)
-end
+
+        -- サーバー負荷およびスパム検知回避のためのインターバル
+        task.wait(2.5)
+    end
+end)
         AutoSave()
     end
 })

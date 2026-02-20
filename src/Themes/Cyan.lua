@@ -4,7 +4,7 @@ return {
 
 	AcrylicMain = Color3.fromRGB(15, 17, 21),
 	AcrylicBorder = Color3.fromRGB(40, 45, 55),
-	AcrylicGradient = ColorSequence.new(Color3.fromRGB(25, 30, 40), Color3.fromRGB(10, 12, 15)),
+	AcrylicGradient = ColorSequence.new(Color3.fromRGB(45, 95, 115), Color3.fromRGB(15, 25, 35)),
 	AcrylicNoise = 0.95,
 
 	TitleBarLine = Color3.fromRGB(35, 40, 50),

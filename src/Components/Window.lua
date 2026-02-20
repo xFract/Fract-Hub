@@ -85,7 +85,7 @@ return function(Config)
 			Position = UDim2.new(0.5, 0, 0, 0),
 			AnchorPoint = Vector2.new(0.5, 0),
 			BackgroundTransparency = 1,
-			Image = Config.Logo or "", -- Uses the parsed logo or nothing
+			Image = Config.Logo or "rbxassetid://92450040427767", -- Uses the parsed logo or nothing
 			ScaleType = Enum.ScaleType.Fit,
 		})
 	})
@@ -327,7 +327,7 @@ return function(Config)
 	Window.MinimizeButton = New("ImageButton", {
 		Size = UDim2.fromOffset(50, 50),
 		Position = UDim2.new(1, -60, 0, 10),
-		Image = "rbxassetid://76725250292577",
+		Image = "rbxassetid://102813139470947",
 		BackgroundColor3 = Color3.fromRGB(30, 30, 30),
 		BackgroundTransparency = 0.2,
 		Visible = false,

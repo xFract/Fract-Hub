@@ -94,18 +94,12 @@ local InterfaceManager = {} do
             local ts = game:GetService("TeleportService")
             local link = self.Settings.PrivateServerLink or ""
 
-            if link ~= "" then
-                -- Try to extract JobId/PrivateServerLink from URL if they pasted a link
-                -- or if it's just raw code, we use TeleportToPrivateServer
-                -- But Roblox's API for client-sided VIP server jumping usually relies on TeleportToPlaceInstance for JobId or we can just try invoking the URI
-                if link:match("privateServerLinkCode=") then
-                    local code = link:match("privateServerLinkCode=([^&]+)")
-                    ts:TeleportToPrivateServer(game.PlaceId, code, {Players.LocalPlayer})
-                else
-                    -- Fallback: If it's just a JobId or VIP access code string
-                    ts:TeleportToPrivateServer(game.PlaceId, link, {Players.LocalPlayer})
-                end
+            if link ~= "" and link:match("%x+-%x+-%x+-%x+-%x+") then
+                -- if user provided a valid JobId string
+                local jobId = link:match("(%x+-%x+-%x+-%x+-%x+)")
+                ts:TeleportToPlaceInstance(game.PlaceId, jobId, Players.LocalPlayer)
             elseif #game.JobId > 0 then
+                -- Naturally rejoins the current server (works perfectly for VIP servers you are inside)
                 ts:TeleportToPlaceInstance(game.PlaceId, game.JobId, Players.LocalPlayer)
             else
                 ts:Teleport(game.PlaceId, Players.LocalPlayer)
@@ -264,12 +258,12 @@ local InterfaceManager = {} do
         })
 
         OtherSection:AddInput("PrivateServerLink", {
-            Title = "Private Server Code / Link",
-            Description = "Paste your VIP server link or code here for Auto Rejoin.",
+            Title = "Private Server JobId",
+            Description = "Paste a custom JobId here, or leave blank to rejoin current VIP server.",
             Default = Settings.PrivateServerLink,
             Numeric = false,
             Finished = true,
-            Placeholder = "VIP Server Link/Code",
+            Placeholder = "Leave blank for current server",
             Callback = function(Value)
                 Settings.PrivateServerLink = Value
                 InterfaceManager:SaveSettings()

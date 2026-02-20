@@ -16,10 +16,27 @@ local NotificationModule = require(Components.Notification)
 local New = Creator.New
 
 local ProtectGui = protectgui or (syn and syn.protect_gui) or function() end
-local TargetParent = RunService:IsStudio() and LocalPlayer.PlayerGui or game:GetService("CoreGui")
+if getgenv and getgenv().Fluent then
+	pcall(function()
+		getgenv().Fluent:Destroy()
+	end)
+end
+
+local function getTarget()
+	if RunService:IsStudio() then
+		return LocalPlayer.PlayerGui
+	elseif gethui then
+		return gethui()
+	elseif syn and syn.protect_gui then
+		return game:GetService("CoreGui")
+	end
+	return game:GetService("CoreGui")
+end
+
+local TargetParent = getTarget()
 for _, v in ipairs(TargetParent:GetChildren()) do
 	if v.Name == "FluentUI" then
-		v:Destroy()
+		pcall(function() v:Destroy() end)
 	end
 end
 
@@ -153,12 +170,14 @@ function Library:SetTheme(Value)
 end
 
 function Library:Destroy()
+	Library.Unloaded = true
 	if Library.Window then
-		Library.Unloaded = true
 		if Library.UseAcrylic then
 			Library.Window.AcrylicPaint.Model:Destroy()
 		end
-		Creator.Disconnect()
+	end
+	Creator.Disconnect()
+	if Library.GUI then
 		Library.GUI:Destroy()
 	end
 end

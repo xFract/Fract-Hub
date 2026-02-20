@@ -154,8 +154,9 @@ function Element:New(Idx, Config)
 				- (Camera.ViewportSize.Y - DropdownInner.AbsolutePosition.Y)
 				+ 40
 		end
+		-- 右側に被らないよう左側にリストを展開する (ボタンの左端 - リスト幅 - 余白5x程度を基準とする)
 		DropdownHolderCanvas.Position =
-			UDim2.fromOffset(DropdownInner.AbsolutePosition.X - 1, DropdownInner.AbsolutePosition.Y - 5 - Add)
+			UDim2.fromOffset(DropdownInner.AbsolutePosition.X - DropdownHolderCanvas.AbsoluteSize.X - 5, DropdownInner.AbsolutePosition.Y - 5 - Add)
 	end
 
 	local ListSizeX = 0

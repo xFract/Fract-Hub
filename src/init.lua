@@ -31,9 +31,14 @@ end
 
 local TargetParent = getTarget()
 
-if getgenv and getgenv().FluentInstance then
-	pcall(function() getgenv().FluentInstance:Destroy() end)
-	getgenv().FluentInstance = nil
+if getgenv then
+	if getgenv().Fluent_UnloadOld then
+		pcall(function() getgenv().Fluent_UnloadOld() end)
+	end
+	if getgenv().FluentInstance then
+		pcall(function() getgenv().FluentInstance:Destroy() end)
+		getgenv().FluentInstance = nil
+	end
 end
 
 local function ForceCleanupGUI()
@@ -235,6 +240,11 @@ end
 if getgenv then
 	getgenv().Fluent = Library
 	getgenv().FluentInstance = Library
+	getgenv().Fluent_UnloadOld = function()
+		if not Library.Unloaded then
+			Library:Destroy()
+		end
+	end
 end
 
 return Library

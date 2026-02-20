@@ -16,8 +16,16 @@ local NotificationModule = require(Components.Notification)
 local New = Creator.New
 
 local ProtectGui = protectgui or (syn and syn.protect_gui) or function() end
+local TargetParent = RunService:IsStudio() and LocalPlayer.PlayerGui or game:GetService("CoreGui")
+for _, v in ipairs(TargetParent:GetChildren()) do
+	if v.Name == "FluentUI" then
+		v:Destroy()
+	end
+end
+
 local GUI = New("ScreenGui", {
-	Parent = RunService:IsStudio() and LocalPlayer.PlayerGui or game:GetService("CoreGui"),
+	Name = "FluentUI",
+	Parent = TargetParent,
 })
 ProtectGui(GUI)
 NotificationModule:Init(GUI)

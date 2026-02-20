@@ -31,26 +31,40 @@ end
 
 local TargetParent = getTarget()
 
-local function destroyOldInstances()
-	local containers = { game:GetService("CoreGui") }
-	if LocalPlayer and LocalPlayer:FindFirstChild("PlayerGui") then
-		table.insert(containers, LocalPlayer.PlayerGui)
+if getgenv and getgenv().FluentInstance then
+	pcall(function() getgenv().FluentInstance:Destroy() end)
+	getgenv().FluentInstance = nil
+end
+
+local function ForceCleanupGUI()
+	local core = game:GetService("CoreGui")
+	local player = game:GetService("Players").LocalPlayer
+	local playerGui = player:FindFirstChild("PlayerGui")
+	
+	for _, child in ipairs(core:GetChildren()) do
+		if child.Name == "Fluent" or child.Name == "FluentUI" or child.Name == "FluentMinimizeGui" then pcall(function() child:Destroy() end) end
 	end
+	
+	if playerGui then
+		for _, child in ipairs(playerGui:GetChildren()) do
+			if child.Name == "Fluent" or child.Name == "FluentUI" or child.Name == "FluentMinimizeGui" then pcall(function() child:Destroy() end) end
+		end
+	end
+	
 	if getgenv and getgenv().gethui then
 		local hui = getgenv().gethui()
-		if hui then table.insert(containers, hui) end
-	end
-
-	for _, container in ipairs(containers) do
-		for _, v in ipairs(container:GetChildren()) do
-			if v.Name == "FluentUI" or v.Name == "FluentMinimizeGui" then
-				pcall(function() v:Destroy() end)
+		if hui then 
+			for _, child in ipairs(hui:GetChildren()) do
+				if child.Name == "Fluent" or child.Name == "FluentUI" or child.Name == "FluentMinimizeGui" then pcall(function() child:Destroy() end) end
 			end
 		end
 	end
 end
 
-destroyOldInstances()
+ForceCleanupGUI()
+task.wait(0.1)
+ForceCleanupGUI()
+task.wait(0.1)
 
 local GUI = New("ScreenGui", {
 	Name = "FluentUI",
@@ -220,6 +234,7 @@ end
 
 if getgenv then
 	getgenv().Fluent = Library
+	getgenv().FluentInstance = Library
 end
 
 return Library

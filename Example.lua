@@ -9,7 +9,7 @@ local Window = Fluent:CreateWindow({
     Size = UDim2.fromOffset(580, 460),
     Acrylic = true,
     Theme = "Cyan",
-    Logo = "rbxassetid://YOUR_LOGO_ID_HERE", -- ここにRobloxにアップロードしたロゴの画像IDを入れてください
+    Logo = "rbxassetid://92450040427767", -- ここにRobloxにアップロードしたロゴの画像IDを入れてください
     MinimizeKey = Enum.KeyCode.LeftControl
 })
 

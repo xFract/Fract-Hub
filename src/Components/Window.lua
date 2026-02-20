@@ -85,7 +85,7 @@ return function(Config)
 			Position = UDim2.new(0.5, 0, 0, 0),
 			AnchorPoint = Vector2.new(0.5, 0),
 			BackgroundTransparency = 1,
-			Image = Config.Logo or "rbxassetid://92450040427767", -- Uses the parsed logo or nothing
+			Image = Config.Logo or "", -- Uses the parsed logo or nothing
 			ScaleType = Enum.ScaleType.Fit,
 		})
 	})

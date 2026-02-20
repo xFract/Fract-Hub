@@ -37,9 +37,9 @@ return function(Config)
 	Window.TabWidth = Config.TabWidth
 
 	local Selector = New("Frame", {
-		Size = UDim2.fromOffset(4, 0),
-		BackgroundColor3 = Color3.fromRGB(76, 194, 255),
-		Position = UDim2.fromOffset(0, 17),
+		Size = UDim2.new(0, 4, 0, 0),
+		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+		Position = UDim2.new(0, 0, 0, 17 + (Config.Logo and 110 or 0)),
 		AnchorPoint = Vector2.new(0, 0.5),
 		ThemeTag = {
 			BackgroundColor3 = "Accent",
@@ -64,31 +64,36 @@ return function(Config)
 		BorderSizePixel = 0,
 		CanvasSize = UDim2.fromScale(0, 0),
 		ScrollingDirection = Enum.ScrollingDirection.Y,
-		Position = UDim2.new(0, 0, 0, 110), -- Offset for the logo
-		Size = UDim2.new(1, 0, 1, -110),
+		Position = UDim2.new(0, 0, 0, Config.Logo and 110 or 0),
+		Size = UDim2.new(1, 0, 1, Config.Logo and -110 or 0),
 	}, {
 		New("UIListLayout", {
 			Padding = UDim.new(0, 4),
 		}),
 	})
 
+	local TabChildren = {
+		Window.TabHolder,
+		Selector,
+	}
+
+	if Config.Logo and Config.Logo ~= "" then
+		table.insert(TabChildren, New("ImageLabel", {
+			Size = UDim2.fromOffset(100, 100),
+			Position = UDim2.new(0.5, 0, 0, 0),
+			AnchorPoint = Vector2.new(0.5, 0),
+			BackgroundTransparency = 1,
+			Image = Config.Logo,
+			ScaleType = Enum.ScaleType.Fit,
+		}))
+	end
+
 	local TabFrame = New("Frame", {
 		Size = UDim2.new(0, Window.TabWidth, 1, -66),
 		Position = UDim2.new(0, 12, 0, 54),
 		BackgroundTransparency = 1,
 		ClipsDescendants = true,
-	}, {
-		Window.TabHolder,
-		Selector,
-		New("ImageLabel", {
-			Size = UDim2.fromOffset(100, 100),
-			Position = UDim2.new(0.5, 0, 0, 0),
-			AnchorPoint = Vector2.new(0.5, 0),
-			BackgroundTransparency = 1,
-			Image = Config.Logo or "", -- Uses the parsed logo or nothing
-			ScaleType = Enum.ScaleType.Fit,
-		})
-	})
+	}, TabChildren)
 
 	Window.TabDisplay = New("TextLabel", {
 		RichText = true,
@@ -175,7 +180,7 @@ return function(Config)
 	local LastValue = 0
 	local LastTime = 0
 	Window.SelectorPosMotor:onStep(function(Value)
-		Selector.Position = UDim2.new(0, 0, 0, Value + 17)
+		Selector.Position = UDim2.new(0, 0, 0, Value + 17 + (Config.Logo and 110 or 0))
 		local Now = tick()
 		local DeltaTime = Now - LastTime
 

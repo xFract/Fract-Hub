@@ -64,6 +64,8 @@ return function(Config)
 		BorderSizePixel = 0,
 		CanvasSize = UDim2.fromScale(0, 0),
 		ScrollingDirection = Enum.ScrollingDirection.Y,
+		Position = UDim2.new(0, 0, 0, 110), -- Offset for the logo
+		Size = UDim2.new(1, 0, 1, -110),
 	}, {
 		New("UIListLayout", {
 			Padding = UDim.new(0, 4),
@@ -78,6 +80,14 @@ return function(Config)
 	}, {
 		Window.TabHolder,
 		Selector,
+		New("ImageLabel", {
+			Size = UDim2.fromOffset(100, 100),
+			Position = UDim2.new(0.5, 0, 0, 0),
+			AnchorPoint = Vector2.new(0.5, 0),
+			BackgroundTransparency = 1,
+			Image = Config.Logo or "", -- Uses the parsed logo or nothing
+			ScaleType = Enum.ScaleType.Fit,
+		})
 	})
 
 	Window.TabDisplay = New("TextLabel", {
@@ -314,9 +324,51 @@ return function(Config)
 		end
 	end)
 
+	Window.MinimizeButton = New("ImageButton", {
+		Size = UDim2.fromOffset(50, 50),
+		Position = UDim2.new(1, -60, 0, 10),
+		Image = "rbxassetid://76725250292577",
+		BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+		BackgroundTransparency = 0.2,
+		Visible = false,
+		Parent = Config.Parent,
+	}, {
+		New("UICorner", {
+			CornerRadius = UDim.new(0, 10),
+		}),
+	})
+
+	local DraggingMini, DragStart, DragStartPos
+	Creator.AddSignal(Window.MinimizeButton.InputBegan, function(Input)
+		if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+			DraggingMini = true
+			DragStart = Input.Position
+			DragStartPos = Window.MinimizeButton.Position
+			Input.Changed:Connect(function() 
+				if Input.UserInputState == Enum.UserInputState.End then 
+					DraggingMini = false 
+				end 
+			end)
+		end
+	end)
+
+	Creator.AddSignal(UserInputService.InputChanged, function(Input)
+		if DraggingMini and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) then
+			local d = Input.Position - DragStart
+			Window.MinimizeButton.Position = UDim2.new(DragStartPos.X.Scale, DragStartPos.X.Offset + d.X, DragStartPos.Y.Scale, DragStartPos.Y.Offset + d.Y)
+		end
+	end)
+
+	Creator.AddSignal(Window.MinimizeButton.MouseButton1Click, function()
+		Window:Minimize()
+	end)
+
 	function Window:Minimize()
 		Window.Minimized = not Window.Minimized
 		Window.Root.Visible = not Window.Minimized
+		if Window.MinimizeButton then
+			Window.MinimizeButton.Visible = Window.Minimized
+		end
 		if not MinimizeNotif then
 			MinimizeNotif = true
 			local Key = Library.MinimizeKeybind and Library.MinimizeKeybind.Value or Library.MinimizeKey.Name
@@ -333,6 +385,9 @@ return function(Config)
 			Window.AcrylicPaint.Model:Destroy()
 		end
 		Window.Root:Destroy()
+		if Window.MinimizeButton then
+			Window.MinimizeButton:Destroy()
+		end
 	end
 
 	local DialogModule = require(Components.Dialog):Init(Window)

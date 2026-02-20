@@ -178,7 +178,11 @@ function Element:New(Idx, Config)
 	Creator.AddSignal(DropdownInner:GetPropertyChangedSignal("AbsolutePosition"), RecalculateListPosition)
 
 	Creator.AddSignal(DropdownInner.MouseButton1Click, function()
-		Dropdown:Open()
+		if Dropdown.Opened then
+			Dropdown:Close()
+		else
+			Dropdown:Open()
+		end
 	end)
 
 	Creator.AddSignal(UserInputService.InputBegan, function(Input)

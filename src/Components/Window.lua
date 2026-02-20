@@ -332,7 +332,7 @@ return function(Config)
 	Window.MinimizeButton = New("ImageButton", {
 		Size = UDim2.fromOffset(50, 50),
 		Position = UDim2.new(1, -60, 0, 10),
-		Image = "rbxassetid://73404955622861",
+		Image = "rbxassetid://76725250292577",
 		BackgroundColor3 = Color3.fromRGB(30, 30, 30),
 		BackgroundTransparency = 0.2,
 		Visible = false,

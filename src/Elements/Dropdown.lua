@@ -208,6 +208,11 @@ function Element:New(Idx, Config)
 			TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
 			{ Size = UDim2.fromScale(1, 1) }
 		):Play()
+		TweenService:Create(
+			DropdownIco,
+			TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+			{ Rotation = 90 }
+		):Play()
 	end
 
 	function Dropdown:Close()
@@ -215,6 +220,11 @@ function Element:New(Idx, Config)
 		ScrollFrame.ScrollingEnabled = true
 		DropdownHolderFrame.Size = UDim2.fromScale(1, 0.6)
 		DropdownHolderCanvas.Visible = false
+		TweenService:Create(
+			DropdownIco,
+			TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+			{ Rotation = 0 }
+		):Play()
 	end
 
 	function Dropdown:Display()

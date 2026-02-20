@@ -12,9 +12,12 @@ local InterfaceManager = {} do
         AutoMinimize = false,
         AutoExecute = false,
         AntiAFK = false,
+        AutoRejoin = false,
+        PrivateServerLink = "",
     }
     
     InterfaceManager.AFKThread = nil
+    InterfaceManager.IsRejoining = false
 
     function InterfaceManager:SetFolder(folder)
 		self.Folder = folder;
@@ -82,6 +85,52 @@ local InterfaceManager = {} do
         end
     end
 
+    function InterfaceManager:BindAutoRejoin()
+        local function triggerRejoin()
+            if not self.Settings.AutoRejoin or self.IsRejoining then return end
+            self.IsRejoining = true
+            task.wait(2)
+
+            local ts = game:GetService("TeleportService")
+            local link = self.Settings.PrivateServerLink or ""
+
+            if link ~= "" then
+                -- Try to extract JobId/PrivateServerLink from URL if they pasted a link
+                -- or if it's just raw code, we use TeleportToPrivateServer
+                -- But Roblox's API for client-sided VIP server jumping usually relies on TeleportToPlaceInstance for JobId or we can just try invoking the URI
+                if link:match("privateServerLinkCode=") then
+                    local code = link:match("privateServerLinkCode=([^&]+)")
+                    ts:TeleportToPrivateServer(game.PlaceId, code, {Players.LocalPlayer})
+                else
+                    -- Fallback: If it's just a JobId or VIP access code string
+                    ts:TeleportToPrivateServer(game.PlaceId, link, {Players.LocalPlayer})
+                end
+            elseif #game.JobId > 0 then
+                ts:TeleportToPlaceInstance(game.PlaceId, game.JobId, Players.LocalPlayer)
+            else
+                ts:Teleport(game.PlaceId, Players.LocalPlayer)
+            end
+            task.wait(5)
+            self.IsRejoining = false
+        end
+
+        local CoreGui = game:GetService("CoreGui")
+        local success, promptOverlay = pcall(function()
+            return CoreGui:FindFirstChild("RobloxPromptGui"):FindFirstChild("promptOverlay")
+        end)
+
+        if success and promptOverlay then
+            promptOverlay.ChildAdded:Connect(function(child)
+                if child.Name == 'ErrorPrompt' then
+                    triggerRejoin()
+                end
+            end)
+        end
+        game:GetService("GuiService").ErrorMessageChanged:Connect(function()
+            triggerRejoin()
+        end)
+    end
+
     function InterfaceManager:BindTeleportAutoExecute()
         local Settings = self.Settings
         local queued = false
@@ -106,6 +155,9 @@ local InterfaceManager = {} do
         
         -- Start AutoExecute Binder
         self:BindTeleportAutoExecute()
+        
+        -- Start AutoRejoin Binder
+        self:BindAutoRejoin()
         
         -- Handle AutoMinimize if on initial load
         if Settings.AutoMinimize and Library.Window then
@@ -199,6 +251,50 @@ local InterfaceManager = {} do
                 InterfaceManager:SetAntiAFK(Value)
                 InterfaceManager:SaveSettings()
             end 
+        })
+        
+        OtherSection:AddToggle("AutoRejoinToggle", { 
+            Title = "Auto Rejoin", 
+            Description = "Automatically rejoins the server if you get kicked or disconnected.", 
+            Default = Settings.AutoRejoin, 
+            Callback = function(Value) 
+                Settings.AutoRejoin = Value
+                InterfaceManager:SaveSettings()
+            end 
+        })
+
+        OtherSection:AddInput("PrivateServerLink", {
+            Title = "Private Server Code / Link",
+            Description = "Paste your VIP server link or code here for Auto Rejoin.",
+            Default = Settings.PrivateServerLink,
+            Numeric = false,
+            Finished = true,
+            Placeholder = "VIP Server Link/Code",
+            Callback = function(Value)
+                Settings.PrivateServerLink = Value
+                InterfaceManager:SaveSettings()
+            end
+        })
+
+        OtherSection:AddButton({
+            Title = "Rejoin",
+            Description = "Rejoins the current server (Public or Private).",
+            Callback = function()
+                local ts = game:GetService("TeleportService")
+                if #game.JobId > 0 then
+                    ts:TeleportToPlaceInstance(game.PlaceId, game.JobId, Players.LocalPlayer)
+                else
+                    ts:Teleport(game.PlaceId, Players.LocalPlayer)
+                end
+            end
+        })
+
+        OtherSection:AddButton({
+            Title = "Server Hop",
+            Description = "Joins a different public server.",
+            Callback = function()
+                game:GetService("TeleportService"):Teleport(game.PlaceId, Players.LocalPlayer)
+            end
         })
     end
 end

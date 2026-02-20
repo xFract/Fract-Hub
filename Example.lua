@@ -74,8 +74,8 @@ InterfaceManager:SetLibrary(Fluent)
 SaveManager:IgnoreThemeSettings()
 SaveManager:SetIgnoreIndexes({})
 
-InterfaceManager:SetFolder("MaruHub")
-SaveManager:SetFolder("MaruHub/SoloHunter")
+InterfaceManager:SetFolder("FractHub")
+SaveManager:SetFolder("FractHub/SoloHunter")
 
 InterfaceManager:BuildInterfaceSection(Tabs.Settings)
 SaveManager:BuildConfigSection(Tabs.Settings)
@@ -83,7 +83,7 @@ SaveManager:BuildConfigSection(Tabs.Settings)
 Window:SelectTab(1)
 
 Fluent:Notify({
-    Title = "Maru Hub",
+    Title = "Fract Hub",
     Content = "Script loaded successfully.",
     Duration = 8
 })

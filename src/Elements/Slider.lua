@@ -18,7 +18,7 @@ function Element:New(Idx, Config)
 	assert(Config.Rounding, "Slider - Missing rounding value.")
 
 	local Slider = {
-		Value = 0,
+		Value = nil,
 		Min = Config.Min,
 		Max = Config.Max,
 		Rounding = Config.Rounding,

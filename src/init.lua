@@ -34,11 +34,27 @@ local function getTarget()
 end
 
 local TargetParent = getTarget()
-for _, v in ipairs(TargetParent:GetChildren()) do
-	if v.Name == "FluentUI" then
-		pcall(function() v:Destroy() end)
+
+local function destroyOldInstances()
+	local containers = { game:GetService("CoreGui") }
+	if LocalPlayer and LocalPlayer:FindFirstChild("PlayerGui") then
+		table.insert(containers, LocalPlayer.PlayerGui)
+	end
+	if getgenv and getgenv().gethui then
+		local hui = getgenv().gethui()
+		if hui then table.insert(containers, hui) end
+	end
+
+	for _, container in ipairs(containers) do
+		for _, v in ipairs(container:GetChildren()) do
+			if v.Name == "FluentUI" or v.Name == "FluentMinimizeGui" then
+				pcall(function() v:Destroy() end)
+			end
+		end
 	end
 end
+
+destroyOldInstances()
 
 local GUI = New("ScreenGui", {
 	Name = "FluentUI",

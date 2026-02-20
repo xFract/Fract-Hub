@@ -1,6 +1,6 @@
 return {
 	Name = "Cyan",
-	Accent = Color3.fromRGB(77, 184, 255),
+	Accent = Color3.fromRGB(85, 155, 185),
 
 	AcrylicMain = Color3.fromRGB(15, 17, 21),
 	AcrylicBorder = Color3.fromRGB(40, 45, 55),
@@ -8,7 +8,7 @@ return {
 	AcrylicNoise = 0.95,
 
 	TitleBarLine = Color3.fromRGB(35, 40, 50),
-	Tab = Color3.fromRGB(77, 184, 255),
+	Tab = Color3.fromRGB(85, 155, 185),
 
 	Element = Color3.fromRGB(25, 28, 35),
 	ElementBorder = Color3.fromRGB(40, 45, 55),
@@ -29,16 +29,16 @@ return {
 
 	Input = Color3.fromRGB(25, 28, 35),
 	InputFocused = Color3.fromRGB(20, 22, 28),
-	InputIndicator = Color3.fromRGB(77, 184, 255),
+	InputIndicator = Color3.fromRGB(85, 155, 185),
 
 	Dialog = Color3.fromRGB(25, 28, 35),
 	DialogHolder = Color3.fromRGB(20, 22, 28),
 	DialogHolderLine = Color3.fromRGB(35, 40, 50),
 	DialogButton = Color3.fromRGB(30, 35, 45),
 	DialogButtonBorder = Color3.fromRGB(40, 45, 55),
-	DialogBorder = Color3.fromRGB(77, 184, 255),
+	DialogBorder = Color3.fromRGB(85, 155, 185),
 	DialogInput = Color3.fromRGB(20, 22, 28),
-	DialogInputLine = Color3.fromRGB(77, 184, 255),
+	DialogInputLine = Color3.fromRGB(85, 155, 185),
 
 	Text = Color3.fromRGB(240, 250, 255),
 	SubText = Color3.fromRGB(160, 170, 180),

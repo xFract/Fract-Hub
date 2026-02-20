@@ -15,8 +15,8 @@ return {
 	InElementBorder = Color3.fromRGB(50, 55, 65),
 	ElementTransparency = 0.85,
 
-	ToggleSlider = Color3.fromRGB(40, 45, 55),
-	ToggleToggled = Color3.fromRGB(0, 0, 0),
+	ToggleSlider = Color3.fromRGB(60, 70, 85),
+	ToggleToggled = Color3.fromRGB(240, 250, 255),
 
 	SliderRail = Color3.fromRGB(40, 45, 55),
 

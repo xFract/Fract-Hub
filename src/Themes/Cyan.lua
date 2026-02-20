@@ -21,23 +21,23 @@ return {
 	SliderRail = Color3.fromRGB(40, 45, 55),
 
 	DropdownFrame = Color3.fromRGB(25, 28, 35),
-	DropdownHolder = Color3.fromRGB(20, 22, 28),
+	DropdownHolder = Color3.fromRGB(20, 25, 35),
 	DropdownBorder = Color3.fromRGB(40, 45, 55),
 	DropdownOption = Color3.fromRGB(35, 40, 50),
 
 	Keybind = Color3.fromRGB(35, 40, 50),
 
 	Input = Color3.fromRGB(25, 28, 35),
-	InputFocused = Color3.fromRGB(20, 22, 28),
+	InputFocused = Color3.fromRGB(20, 25, 35),
 	InputIndicator = Color3.fromRGB(85, 155, 185),
 
 	Dialog = Color3.fromRGB(25, 28, 35),
-	DialogHolder = Color3.fromRGB(20, 22, 28),
+	DialogHolder = Color3.fromRGB(20, 25, 35),
 	DialogHolderLine = Color3.fromRGB(35, 40, 50),
 	DialogButton = Color3.fromRGB(30, 35, 45),
 	DialogButtonBorder = Color3.fromRGB(40, 45, 55),
 	DialogBorder = Color3.fromRGB(85, 155, 185),
-	DialogInput = Color3.fromRGB(20, 22, 28),
+	DialogInput = Color3.fromRGB(20, 25, 35),
 	DialogInputLine = Color3.fromRGB(85, 155, 185),
 
 	Text = Color3.fromRGB(240, 250, 255),

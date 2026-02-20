@@ -16,11 +16,7 @@ local NotificationModule = require(Components.Notification)
 local New = Creator.New
 
 local ProtectGui = protectgui or (syn and syn.protect_gui) or function() end
-if getgenv and getgenv().Fluent then
-	pcall(function()
-		getgenv().Fluent:Destroy()
-	end)
-end
+
 
 local function getTarget()
 	if RunService:IsStudio() then

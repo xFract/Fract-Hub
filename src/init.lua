@@ -128,6 +128,7 @@ function Library:CreateWindow(Config)
 		Title = Config.Title,
 		SubTitle = Config.SubTitle,
 		TabWidth = Config.TabWidth,
+		Logo = Config.Logo,
 	})
 
 	Library.Window = Window

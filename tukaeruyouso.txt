@@ -1,0 +1,319 @@
+================================================================================
+  Fract-Hub 使える要素 完全リファレンス
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【1】Window（ウィンドウ作成）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+local Window = Fluent:CreateWindow({
+    Title       = "ウィンドウタイトル",        -- 必須: メインタイトル
+    SubTitle    = "サブタイトル",              -- 任意: サブタイトル
+    TabWidth    = 160,                         -- 任意: タブの横幅(px)
+    Size        = UDim2.fromOffset(580, 460),  -- 任意: ウィンドウサイズ
+    Acrylic     = true,                        -- 任意: アクリル(すりガラス)効果
+    Theme       = "Cyan",                      -- 任意: テーマ名
+    Logo        = "rbxassetid://画像ID",       -- 任意: ロゴ画像
+    MinimizeKey = Enum.KeyCode.LeftControl      -- 任意: 最小化キー
+})
+
+【使用可能テーマ】
+  Cyan, Dark, Darker, Light, Amethyst, Aqua, Rose
+
+【Windowメソッド】
+  Window:AddTab({ Title, Icon })     -- タブ追加
+  Window:SelectTab(番号)             -- タブ選択 (1始まり)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【2】Tab（タブ）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+local Tabs = {
+    Main = Window:AddTab({ Title = "Main", Icon = "home" }),
+}
+
+-- Iconにはlucideアイコン名を使用可能
+-- 例: "home", "settings", "sword", "log-in", "bar-chart-2",
+--     "shopping-cart", "compass", "shield", "heart", "star" など
+
+【Tabメソッド】
+  Tab:AddSection("セクション名")  -- セクション(見出し付きグループ)を追加
+  Tab:AddToggle(...)               -- 以下の各要素を追加可能
+  Tab:AddButton(...)
+  Tab:AddSlider(...)
+  Tab:AddDropdown(...)
+  Tab:AddInput(...)
+  Tab:AddKeybind(...)
+  Tab:AddColorpicker(...)
+  Tab:AddParagraph(...)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【3】Section（セクション）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+local Section = Tabs.Main:AddSection("セクション名")
+
+-- セクション内にも全ての要素を追加可能
+Section:AddToggle(...)
+Section:AddButton(...)
+-- 以下同様
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【4】Toggle（トグル / ON・OFFスイッチ）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+local MyToggle = Tabs.Main:AddToggle("一意のID", {
+    Title       = "タイトル",      -- 必須: 表示名
+    Description = "説明文",        -- 任意: 説明テキスト
+    Default     = false,           -- 任意: 初期値 (true/false)
+    Callback    = function(Value)  -- 任意: 値変更時コールバック
+        print(Value)
+    end
+})
+
+【メソッド】
+  MyToggle:OnChanged(function(Value) end)  -- 値変更イベント登録
+  MyToggle:SetValue(true/false)            -- 値を手動設定
+  MyToggle:Destroy()                       -- 要素を削除
+
+【値の取得】
+  Options.一意のID.Value  -- 現在のtrue/false
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【5】Button（ボタン）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Tabs.Main:AddButton({
+    Title       = "ボタン名",      -- 必須: 表示名
+    Description = "説明文",        -- 任意: 説明テキスト
+    Callback    = function()       -- 任意: クリック時コールバック
+        print("ボタンが押された")
+    end
+})
+
+※ ボタンはOptionsに値を保存しない（IDを渡さない）
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【6】Slider（スライダー）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+local MySlider = Tabs.Main:AddSlider("一意のID", {
+    Title       = "タイトル",      -- 必須: 表示名
+    Description = "説明文",        -- 任意: 説明テキスト
+    Default     = 5,               -- 必須: 初期値
+    Min         = 0,               -- 必須: 最小値
+    Max         = 100,             -- 必須: 最大値
+    Rounding    = 1,               -- 必須: 小数点の桁数 (0=整数)
+    Callback    = function(Value)  -- 任意: 値変更時コールバック
+        print(Value)
+    end
+})
+
+【メソッド】
+  MySlider:OnChanged(function(Value) end)  -- 値変更イベント登録
+  MySlider:SetValue(数値)                  -- 値を手動設定
+  MySlider:Destroy()                       -- 要素を削除
+
+【値の取得】
+  Options.一意のID.Value  -- 現在の数値
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【7】Dropdown（ドロップダウン選択）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+local MyDropdown = Tabs.Main:AddDropdown("一意のID", {
+    Title       = "タイトル",                 -- 任意: 表示名
+    Description = "説明文",                   -- 任意: 説明テキスト
+    Values      = {"選択肢A", "選択肢B", "選択肢C"},  -- 必須: 選択肢リスト
+    Default     = 1,                           -- 任意: デフォルト値(インデックス or 文字列 or テーブル)
+    Multi       = false,                       -- 任意: 複数選択を許可 (true/false)
+    AllowNull   = false,                       -- 任意: 未選択状態を許可
+    Callback    = function(Value)              -- 任意: 値変更時コールバック
+        print(Value)
+    end
+})
+
+【Multiモード時】
+  Default = {"選択肢A", "選択肢B"}  -- テーブルで指定
+  -- Value は { ["選択肢A"] = true, ["選択肢B"] = true } 形式
+
+【メソッド】
+  MyDropdown:OnChanged(function(Value) end)   -- 値変更イベント登録
+  MyDropdown:SetValue("選択肢A")              -- 単一選択: 文字列
+  MyDropdown:SetValue({["選択肢A"] = true})   -- 複数選択: テーブル
+  MyDropdown:SetValues({"新A", "新B"})        -- 選択肢リストを差し替え
+  MyDropdown:Destroy()                        -- 要素を削除
+
+【値の取得】
+  Options.一意のID.Value  -- 単一: 文字列 / 複数: テーブル
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【8】Input（テキスト入力）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+local MyInput = Tabs.Main:AddInput("一意のID", {
+    Title       = "タイトル",        -- 必須: 表示名
+    Description = "説明文",          -- 任意: 説明テキスト
+    Default     = "",                -- 任意: 初期値
+    Placeholder = "ここに入力...",   -- 任意: プレースホルダーテキスト
+    Numeric     = false,             -- 任意: 数値入力のみ (true/false)
+    Finished    = false,             -- 任意: Enterキー確定時のみコールバック発火
+    MaxLength   = nil,               -- 任意: 最大文字数
+    Callback    = function(Value)    -- 任意: 値変更時コールバック
+        print(Value)
+    end
+})
+
+【メソッド】
+  MyInput:OnChanged(function(Value) end)  -- 値変更イベント登録
+  MyInput:SetValue("テキスト")            -- 値を手動設定
+  MyInput:Destroy()                       -- 要素を削除
+
+【値の取得】
+  Options.一意のID.Value  -- 現在の文字列
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【9】Keybind（キーバインド設定）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+local MyKeybind = Tabs.Main:AddKeybind("一意のID", {
+    Title           = "タイトル",               -- 必須: 表示名
+    Description     = "説明文",                 -- 任意: 説明テキスト
+    Default         = "LeftControl",            -- 必須: デフォルトキー名
+    Mode            = "Toggle",                 -- 任意: "Toggle" / "Hold" / "Always"
+    Callback        = function(Value)           -- 任意: キー押下時コールバック
+        print("トグル状態:", Value)
+    end,
+    ChangedCallback = function(NewKey)          -- 任意: キー変更時コールバック
+        print("新しいキー:", NewKey)
+    end
+})
+
+【Modeの説明】
+  "Toggle" -- キーを押すたびにON/OFFが切り替わる
+  "Hold"   -- キーを押している間だけON
+  "Always" -- 常にON
+
+【メソッド】
+  MyKeybind:OnChanged(function(NewKey) end)  -- キー変更イベント登録
+  MyKeybind:OnClick(function(State) end)     -- キー押下イベント登録
+  MyKeybind:SetValue("E", "Toggle")         -- キーとモードを手動設定
+  MyKeybind:GetState()                       -- 現在のON/OFF状態を取得
+  MyKeybind:Destroy()                        -- 要素を削除
+
+【値の取得】
+  Options.一意のID.Value  -- 現在のキー名(文字列)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【10】Colorpicker（カラーピッカー）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+local MyColor = Tabs.Main:AddColorpicker("一意のID", {
+    Title        = "タイトル",                    -- 必須: 表示名
+    Description  = "説明文",                      -- 任意: 説明テキスト
+    Default      = Color3.fromRGB(255, 0, 0),     -- 必須: デフォルト色
+    Transparency = 0,                              -- 任意: 透明度 (0=不透明, 1=完全透明)
+    Callback     = function(Color)                 -- 任意: 色変更時コールバック
+        print(Color)
+    end
+})
+
+【メソッド】
+  MyColor:OnChanged(function(Color) end)                  -- 色変更イベント登録
+  MyColor:SetValueRGB(Color3.fromRGB(0,255,0), 0)        -- RGB+透明度で手動設定
+  MyColor:SetValue({H, S, V}, Transparency)               -- HSV+透明度で手動設定
+  MyColor:Destroy()                                       -- 要素を削除
+
+【値の取得】
+  Options.一意のID.Value         -- 現在のColor3
+  Options.一意のID.Transparency  -- 現在の透明度
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【11】Paragraph（段落テキスト / 情報表示）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Tabs.Main:AddParagraph({
+    Title   = "見出し",     -- 必須: タイトル
+    Content = "本文テキスト" -- 任意: 本文 (デフォルト: "")
+})
+
+※ OptionsやIDは不要 (値を保存しない表示のみの要素)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【12】Notify（通知）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Fluent:Notify({
+    Title      = "通知タイトル",     -- 任意: タイトル (デフォルト: "Title")
+    Content    = "メイン内容",       -- 任意: メイン内容 (デフォルト: "Content")
+    SubContent = "サブ内容",         -- 任意: サブ内容 (デフォルト: "")
+    Duration   = 5                   -- 任意: 自動消去までの秒数 (nil=手動閉じのみ)
+})
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【13】Addons（アドオン）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+■ SaveManager（設定の保存・読み込み）
+  SaveManager:SetLibrary(Fluent)
+  SaveManager:SetFolder("フォルダ名")
+  SaveManager:IgnoreThemeSettings()
+  SaveManager:SetIgnoreIndexes({})
+  SaveManager:BuildConfigSection(Tabs.Settings)  -- 設定保存UIをタブに追加
+  SaveManager:LoadAutoloadConfig()               -- 自動ロード
+
+■ InterfaceManager（テーマ切替UI）
+  InterfaceManager:SetLibrary(Fluent)
+  InterfaceManager:SetFolder("フォルダ名")
+  InterfaceManager:BuildInterfaceSection(Tabs.Settings)  -- テーマ設定UIをタブに追加
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【14】ライブラリユーティリティ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Fluent:SetTheme("テーマ名")           -- テーマを動的に変更
+Fluent:ToggleAcrylic(true/false)       -- アクリル効果のON/OFF
+Fluent:ToggleTransparency(true/false)  -- 背景透明度のON/OFF
+Fluent:Destroy()                       -- ライブラリ全体を破棄
+
+local Options = Fluent.Options          -- 全要素の値にアクセスするテーブル
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+【15】全要素共通メソッド
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+-- Toggle, Slider, Dropdown, Input, Keybind, Colorpicker で使用可能
+要素:SetTitle("新しいタイトル")     -- タイトルを変更
+要素:SetDesc("新しい説明")          -- 説明文を変更
+
+
+================================================================================
+  要素一覧まとめ
+================================================================================
+
+  番号 | 要素名         | 追加メソッド         | IDが必要 | 値の保存
+  ---- | -------------- | -------------------- | -------- | --------
+   1   | Toggle         | AddToggle            | ○       | ○
+   2   | Button         | AddButton            | ×       | ×
+   3   | Slider         | AddSlider            | ○       | ○
+   4   | Dropdown       | AddDropdown          | ○       | ○
+   5   | Input          | AddInput             | ○       | ○
+   6   | Keybind        | AddKeybind           | ○       | ○
+   7   | Colorpicker    | AddColorpicker       | ○       | ○
+   8   | Paragraph      | AddParagraph         | ×       | ×
+
+================================================================================

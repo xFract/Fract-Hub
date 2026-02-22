@@ -171,7 +171,6 @@ local InterfaceManager = {} do
 
 		local InterfaceTheme = section:AddDropdown("InterfaceTheme", {
 			Title = "Theme",
-			Description = "Changes the interface theme.",
 			Values = Library.Themes,
 			Default = Settings.Theme,
 			Callback = function(Value)
@@ -186,7 +185,6 @@ local InterfaceManager = {} do
 		if Library.UseAcrylic then
 			section:AddToggle("AcrylicToggle", {
 				Title = "Acrylic",
-				Description = "The blurred background requires graphic quality 8+",
 				Default = Settings.Acrylic,
 				Callback = function(Value)
 					Library:ToggleAcrylic(Value)
@@ -198,7 +196,6 @@ local InterfaceManager = {} do
 	
 		section:AddToggle("TransparentToggle", {
 			Title = "Transparency",
-			Description = "Makes the interface transparent.",
 			Default = Settings.Transparency,
 			Callback = function(Value)
 				Library:ToggleTransparency(Value)
@@ -219,7 +216,6 @@ local InterfaceManager = {} do
         
         OtherSection:AddToggle("AutoMinimizeToggle", { 
             Title = "Auto Minimize", 
-            Description = "Starts the hub minimized.", 
             Default = Settings.AutoMinimize, 
             Callback = function(Value) 
                 Settings.AutoMinimize = Value
@@ -229,7 +225,6 @@ local InterfaceManager = {} do
         
         OtherSection:AddToggle("AutoExecuteToggle", { 
             Title = "Auto Execute", 
-            Description = "Re-executes the script upon teleport.", 
             Default = Settings.AutoExecute, 
             Callback = function(Value) 
                 Settings.AutoExecute = Value
@@ -239,7 +234,6 @@ local InterfaceManager = {} do
         
         OtherSection:AddToggle("AntiAfkToggle", { 
             Title = "Anti AFK", 
-            Description = "Prevents being kicked for idling.", 
             Default = Settings.AntiAFK, 
             Callback = function(Value) 
                 InterfaceManager:SetAntiAFK(Value)
@@ -249,7 +243,6 @@ local InterfaceManager = {} do
         
         OtherSection:AddToggle("AutoRejoinToggle", { 
             Title = "Auto Rejoin", 
-            Description = "Automatically rejoins the server if you get kicked or disconnected.", 
             Default = Settings.AutoRejoin, 
             Callback = function(Value) 
                 Settings.AutoRejoin = Value
@@ -259,7 +252,6 @@ local InterfaceManager = {} do
 
         OtherSection:AddInput("PrivateServerLink", {
             Title = "Private Server JobId",
-            Description = "Paste a custom JobId here, or leave blank to rejoin current VIP server.",
             Default = Settings.PrivateServerLink,
             Numeric = false,
             Finished = true,
@@ -272,7 +264,6 @@ local InterfaceManager = {} do
 
         OtherSection:AddButton({
             Title = "Rejoin",
-            Description = "Rejoins the current server (Public or Private).",
             Callback = function()
                 local ts = game:GetService("TeleportService")
                 if #game.JobId > 0 then
@@ -285,7 +276,6 @@ local InterfaceManager = {} do
 
         OtherSection:AddButton({
             Title = "Server Hop",
-            Description = "Joins a different public server.",
             Callback = function()
                 game:GetService("TeleportService"):Teleport(game.PlaceId, Players.LocalPlayer)
             end

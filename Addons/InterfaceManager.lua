@@ -12,12 +12,11 @@ local InterfaceManager = {} do
         AutoMinimize = false,
         AutoExecute = false,
         AntiAFK = false,
-        AutoRejoin = false,
-        PrivateServerLink = "",
+        PerformanceMode = false,
+        FPSCap = 60,
     }
     
     InterfaceManager.AFKThread = nil
-    InterfaceManager.IsRejoining = false
 
     function InterfaceManager:SetFolder(folder)
 		self.Folder = folder;
@@ -65,6 +64,45 @@ local InterfaceManager = {} do
         end
     end
 
+    function InterfaceManager:SetPerformanceMode(enabled)
+        local Settings = self.Settings
+        Settings.PerformanceMode = (enabled == true)
+        
+        if not Settings.PerformanceMode then return end
+        
+        task.spawn(function()
+            -- 照明の最適化
+            pcall(function()
+                local Lighting = game:GetService("Lighting")
+                Lighting.GlobalShadows = false
+                Lighting.FogEnd = 9e9
+                Lighting.ShadowSoftness = 0
+            end)
+            
+            -- パーツとエフェクトの最適化
+            pcall(function()
+                for _, obj in pairs(workspace:GetDescendants()) do
+                    if obj:IsA("BasePart") then
+                        obj.Material = Enum.Material.SmoothPlastic
+                    elseif obj:IsA("Decal") or obj:IsA("Texture") then
+                        obj.Transparency = 1
+                    elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") then
+                        obj.Enabled = false
+                    end
+                end
+            end)
+        end)
+    end
+
+    function InterfaceManager:SetFPSCap(value)
+        local Settings = self.Settings
+        Settings.FPSCap = value
+        
+        if type(setfpscap) == "function" then
+            setfpscap(value)
+        end
+    end
+
     function InterfaceManager:SetAntiAFK(enabled)
         local Settings = self.Settings
         Settings.AntiAFK = (enabled == true)
@@ -83,46 +121,6 @@ local InterfaceManager = {} do
                 end
             end)
         end
-    end
-
-    function InterfaceManager:BindAutoRejoin()
-        local function triggerRejoin()
-            if not self.Settings.AutoRejoin or self.IsRejoining then return end
-            self.IsRejoining = true
-            task.wait(2)
-
-            local ts = game:GetService("TeleportService")
-            local link = self.Settings.PrivateServerLink or ""
-
-            if link ~= "" and link:match("%x+-%x+-%x+-%x+-%x+") then
-                -- if user provided a valid JobId string
-                local jobId = link:match("(%x+-%x+-%x+-%x+-%x+)")
-                ts:TeleportToPlaceInstance(game.PlaceId, jobId, Players.LocalPlayer)
-            elseif #game.JobId > 0 then
-                -- Naturally rejoins the current server (works perfectly for VIP servers you are inside)
-                ts:TeleportToPlaceInstance(game.PlaceId, game.JobId, Players.LocalPlayer)
-            else
-                ts:Teleport(game.PlaceId, Players.LocalPlayer)
-            end
-            task.wait(5)
-            self.IsRejoining = false
-        end
-
-        local CoreGui = game:GetService("CoreGui")
-        local success, promptOverlay = pcall(function()
-            return CoreGui:FindFirstChild("RobloxPromptGui"):FindFirstChild("promptOverlay")
-        end)
-
-        if success and promptOverlay then
-            promptOverlay.ChildAdded:Connect(function(child)
-                if child.Name == 'ErrorPrompt' then
-                    triggerRejoin()
-                end
-            end)
-        end
-        game:GetService("GuiService").ErrorMessageChanged:Connect(function()
-            triggerRejoin()
-        end)
     end
 
     function InterfaceManager:BindTeleportAutoExecute()
@@ -150,9 +148,6 @@ local InterfaceManager = {} do
         -- Start AutoExecute Binder
         self:BindTeleportAutoExecute()
         
-        -- Start AutoRejoin Binder
-        self:BindAutoRejoin()
-        
         -- Handle AutoMinimize if on initial load
         if Settings.AutoMinimize and Library.Window then
             -- We spawn this to let the UI finish setting up first if needed
@@ -165,6 +160,16 @@ local InterfaceManager = {} do
         -- Handle AntiAFK initial state
         if Settings.AntiAFK then
             self:SetAntiAFK(true)
+        end
+        
+        -- Handle Performance Mode initial state
+        if Settings.PerformanceMode then
+            self:SetPerformanceMode(true)
+        end
+        
+        -- Handle FPS Cap initial state
+        if type(setfpscap) == "function" then
+            self:SetFPSCap(Settings.FPSCap or 60)
         end
 
 		local section = tab:AddSection("Interface")
@@ -241,43 +246,24 @@ local InterfaceManager = {} do
             end 
         })
         
-        OtherSection:AddToggle("AutoRejoinToggle", { 
-            Title = "Auto Rejoin", 
-            Default = Settings.AutoRejoin, 
+        OtherSection:AddToggle("PerformanceModeToggle", { 
+            Title = "Performance Mode", 
+            Default = Settings.PerformanceMode, 
             Callback = function(Value) 
-                Settings.AutoRejoin = Value
+                InterfaceManager:SetPerformanceMode(Value)
                 InterfaceManager:SaveSettings()
             end 
         })
 
-        OtherSection:AddInput("PrivateServerLink", {
-            Title = "Private Server JobId",
-            Default = Settings.PrivateServerLink,
-            Numeric = false,
-            Finished = true,
-            Placeholder = "Leave blank for current server",
+        OtherSection:AddSlider("FPSCapSlider", {
+            Title = "FPS Cap",
+            Default = Settings.FPSCap or 60,
+            Min = 15,
+            Max = 240,
+            Rounding = 0,
             Callback = function(Value)
-                Settings.PrivateServerLink = Value
+                InterfaceManager:SetFPSCap(Value)
                 InterfaceManager:SaveSettings()
-            end
-        })
-
-        OtherSection:AddButton({
-            Title = "Rejoin",
-            Callback = function()
-                local ts = game:GetService("TeleportService")
-                if #game.JobId > 0 then
-                    ts:TeleportToPlaceInstance(game.PlaceId, game.JobId, Players.LocalPlayer)
-                else
-                    ts:Teleport(game.PlaceId, Players.LocalPlayer)
-                end
-            end
-        })
-
-        OtherSection:AddButton({
-            Title = "Server Hop",
-            Callback = function()
-                game:GetService("TeleportService"):Teleport(game.PlaceId, Players.LocalPlayer)
             end
         })
     end

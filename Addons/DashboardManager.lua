@@ -269,7 +269,25 @@ function DashboardManager:BuildDashboardTab(tab, config)
 		Name = "DiscordCard",
 		Parent = row1,
 	})
-	MakeCardTitle(discordCard, "💬", "Discord")
+
+	-- Discordロゴアイコン + タイトル
+	local discordIcon = Instance.new("ImageLabel")
+	discordIcon.Size = UDim2.fromOffset(18, 18)
+	discordIcon.Position = UDim2.fromOffset(0, 0)
+	discordIcon.BackgroundTransparency = 1
+	discordIcon.Image = "rbxassetid://7733960981"
+	discordIcon.ImageColor3 = Color3.fromRGB(88, 101, 242)
+	discordIcon.Parent = discordCard
+
+	MakeLabel({
+		Text = "Discord",
+		TextSize = 15,
+		Font = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
+		TextColor3 = Color3.fromRGB(240, 250, 255),
+		Size = UDim2.new(1, -26, 0, 18),
+		Position = UDim2.fromOffset(24, 0),
+		Parent = discordCard,
+	})
 	local discordSub = MakeSubText(discordCard, "Tap to join the discord of your script.", 24)
 
 	-- Discordカードのクリック処理
@@ -356,19 +374,47 @@ function DashboardManager:BuildDashboardTab(tab, config)
 	local playersValueLabel = AddServerStat("Players", playerCount .. " Player" .. (playerCount ~= 1 and "s" or "") .. " In\nThis Server", 0, 0)
 	local capacityValueLabel = AddServerStat("Capacity", maxPlayers .. " Players In\ncan join.", 1, 0)
 
-	-- FPSとレイテンシ
-	local fpsValue = "60 FPS"
-	local pingValue = "?"
-	pcall(function()
-		pingValue = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()) .. "ms"
-	end)
-	AddServerStat("Latency", fpsValue .. "\n" .. pingValue, 0, 1)
+	-- FPS/Latency（動的に更新される）
+	local latencyValueLabel = AddServerStat("Latency", "... FPS\n...ms", 0, 1)
 	AddServerStat("Join Script", "Tap to copy a\npastable script", 1, 1)
 
 	-- リージョン
 	local region = GetRegion()
 	AddServerStat("Players", "~", 0, 2)
-	AddServerStat("Region", region, 1, 2)
+	local regionValueLabel = AddServerStat("Region", region, 1, 2)
+
+	-- サーバー情報の動的更新（2秒ごとにPlayer数/FPS/Pingを取得・反映）
+	task.spawn(function()
+		local frameCount = 0
+		local lastTime = tick()
+		local currentFPS = 60
+
+		-- FPSの計算用RenderSteppedフック
+		RunService.RenderStepped:Connect(function()
+			frameCount = frameCount + 1
+			local elapsed = tick() - lastTime
+			if elapsed >= 1 then
+				currentFPS = math.floor(frameCount / elapsed)
+				frameCount = 0
+				lastTime = tick()
+			end
+		end)
+
+		-- 2秒ごとに全データを更新
+		while task.wait(2) do
+			-- プレイヤー数の更新
+			local currentPlayers = #Players:GetPlayers()
+			playersValueLabel.Text = currentPlayers .. " Player" .. (currentPlayers ~= 1 and "s" or "") .. " In\nThis Server"
+			capacityValueLabel.Text = Players.MaxPlayers .. " Players In\ncan join."
+
+			-- FPS/Pingの更新
+			local pingStr = "?"
+			pcall(function()
+				pingStr = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()) .. "ms"
+			end)
+			latencyValueLabel.Text = currentFPS .. " FPS\n" .. pingStr
+		end
+	end)
 
 	return tab
 end

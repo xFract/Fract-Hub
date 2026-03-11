@@ -72,8 +72,7 @@ function DashboardManager:BuildDashboardTab(window, config)
 	assert(self.Library, "Must set DashboardManager.Library first")
 	assert(window, "Must pass Window object")
 
-	-- ダッシュボードタブを自動生成
-	window:AddTabSection("Dashboards")
+	-- ダッシュボードタブを自動生成（セクションヘッダーなし）
 	local tab = window:AddTab({ Title = "Dashboards", Icon = "layout-dashboard" })
 	self.Tab = tab
 

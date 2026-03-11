@@ -38,6 +38,14 @@ local Window = Fluent:CreateWindow({
     MinimizeKey = Enum.KeyCode.LeftControl
 })
 
+	-- ダッシュボードを最初に自動生成（タブ一覧の先頭に配置）
+	DashboardManager:SetLibrary(Fluent)
+	DashboardManager:BuildDashboardTab(Window, {
+	    GameName = "Solo Hunter",
+	    Developer = "xFract",
+	    Discord = "https://discord.gg/fracthub",
+	})
+
 	local Tabs = {}
 
 	Window:AddTabSection("Farming")
@@ -124,19 +132,12 @@ end
 -- Addons Configuration
 SaveManager:SetLibrary(Fluent)
 InterfaceManager:SetLibrary(Fluent)
-DashboardManager:SetLibrary(Fluent)
 SaveManager:IgnoreThemeSettings()
 SaveManager:SetIgnoreIndexes({})
 
 InterfaceManager:SetFolder("FractHub")
 SaveManager:SetFolder("FractHub/SoloHunter")
 
--- ダッシュボードの自動構築（タブも自動生成）
-DashboardManager:BuildDashboardTab(Window, {
-    GameName = "Solo Hunter",
-    Developer = "xFract",
-    Discord = "https://discord.gg/fracthub",
-})
 
 InterfaceManager:BuildInterfaceSection(Tabs.Settings)
 SaveManager:BuildConfigSection(Tabs.Settings)

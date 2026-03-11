@@ -16,15 +16,18 @@ local Window = Fluent:CreateWindow({
     Size = UDim2.fromOffset(520, 380),
     Acrylic = true,
     Theme = "Cyan",
+    Logo = "rbxassetid://92450040427767",
     MinimizeKey = Enum.KeyCode.LeftControl
 })
 
-local Tabs = {
-    Dashboard = Window:AddTab({ Title = "Dashboards", Icon = "layout-dashboard" }),
-    Main = Window:AddTab({ Title = "Main", Icon = "swords" }),
-    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" }),
-    Config = Window:AddTab({ Title = "Config", Icon = "save" }),
-}
+local Tabs = {}
+Tabs.Dashboard = Window:AddTab({ Title = "Dashboard", Icon = "layout-dashboard" })
+Window:AddTabSection("Main")
+Tabs.Main = Window:AddTab({ Title = "Main", Icon = "swords" })
+
+Window:AddTabSection("Settings")
+Tabs.Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+Tabs.Config = Window:AddTab({ Title = "Config", Icon = "save" })
 
 DashboardManager:SetLibrary(Fluent)
 DashboardManager:BuildDashboardTab(Tabs.Dashboard, {
@@ -124,9 +127,35 @@ end
 -- ===== UI Elements =====
 local FarmSection = Tabs.Main:AddSection("Farm Settings")
 
-local AutoFarmToggle = Tabs.Main:AddToggle("AutoFarm", {
+local AutoFarmToggle = FarmSection:AddToggle("AutoFarm", {
     Title = "Auto Farm",
-    Description = "自動周回のトグル",
+    Default = false
+})
+
+local PositionDropdown = FarmSection:AddDropdown("Position", {
+    Title = "Position",
+    Values = {"Above", "Below", "Behind", "Front"},
+    Default = "Above",
+    Multi = false
+})
+
+local DistanceSlider = FarmSection:AddSlider("Distance", {
+    Title = "Distance",
+    Default = 15,
+    Min = 0,
+    Max = 50,
+    Rounding = 0
+})
+
+local CombatSection = Tabs.Main:AddSection("Combat Settings")
+
+local AutoAttackToggle = CombatSection:AddToggle("AutoAttack", {
+    Title = "Auto Attack",
+    Default = false
+})
+
+local AutoSkillToggle = CombatSection:AddToggle("AutoSkill", {
+    Title = "Auto Skill",
     Default = false
 })
 
@@ -164,8 +193,8 @@ InterfaceManager:SetLibrary(Fluent)
 SaveManager:IgnoreThemeSettings()
 SaveManager:SetIgnoreIndexes({})
 
-InterfaceManager:SetFolder("NewGameHub")
-SaveManager:SetFolder(FOLDER_NAME)
+InterfaceManager:SetFolder("FractHub")
+SaveManager:SetFolder("FractHub/BaseTemplate")
 
 InterfaceManager:BuildInterfaceSection(Tabs.Settings)
 SaveManager:BuildConfigSection(Tabs.Config)

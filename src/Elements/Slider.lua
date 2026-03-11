@@ -149,7 +149,7 @@ function Element:New(Idx, Config)
 		SliderFill.Size = UDim2.fromScale((self.Value - Slider.Min) / (Slider.Max - Slider.Min), 1)
 		
 		local SuffixStr = self.Suffix == "" and "" or (" " .. self.Suffix)
-		SliderDisplay.Text = "<b>" .. tostring(self.Value) .. "</b>/" .. tostring(Slider.Max) .. SuffixStr
+		SliderDisplay.Text = "<b>" .. tostring(self.Value) .. "</b> / " .. tostring(Slider.Max) .. SuffixStr
 
 		Library:SafeCallback(Slider.Callback, self.Value)
 		Library:SafeCallback(Slider.Changed, self.Value)

@@ -77,6 +77,7 @@ return function(Config)
 	}, {
 		New("UIListLayout", {
 			Padding = UDim.new(0, 4),
+			SortOrder = Enum.SortOrder.LayoutOrder,
 		}),
 	})
 
@@ -445,12 +446,18 @@ return function(Config)
 		Dialog:Open()
 	end
 
+	Window.ElementsOrder = 0
+
 	local TabModule = require(Components.Tab):Init(Window)
 	function Window:AddTab(TabConfig)
-		return TabModule:New(TabConfig.Title, TabConfig.Icon, Window.TabHolder)
+		local Tab = TabModule:New(TabConfig.Title, TabConfig.Icon, Window.TabHolder)
+		Window.ElementsOrder = Window.ElementsOrder + 1
+		Tab.Frame.LayoutOrder = Window.ElementsOrder
+		return Tab
 	end
 	
 	function Window:AddTabSection(Title)
+		Window.ElementsOrder = Window.ElementsOrder + 1
 		return New("TextLabel", {
 			Text = Title,
 			TextTransparency = 0,
@@ -462,6 +469,7 @@ return function(Config)
 			Position = UDim2.new(0, 12, 0, 0),
 			BackgroundTransparency = 1,
 			Parent = Window.TabHolder,
+			LayoutOrder = Window.ElementsOrder,
 			ThemeTag = {
 				TextColor3 = "SubText",
 			},

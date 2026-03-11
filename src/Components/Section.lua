@@ -19,12 +19,13 @@ return function(Title, Parent)
 	})
 
 	Section.Root = New("Frame", {
-		BackgroundTransparency = 0, -- Solid background for the card
+		BackgroundTransparency = 0.89, -- Base transparency, will use ThemeTag
 		Size = UDim2.new(1, 0, 0, 26),
 		LayoutOrder = 7,
 		Parent = Parent,
 		ThemeTag = {
 			BackgroundColor3 = "Element", -- Use Element or Dialog color for the card background
+			BackgroundTransparency = "ElementTransparency",
 		},
 	}, {
 		New("UICorner", {

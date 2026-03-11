@@ -33,7 +33,7 @@ return function(Title, Parent)
 		New("UIStroke", {
 			Color = Color3.fromRGB(40, 45, 55), -- Example stroke, will use ThemeTag
 			Thickness = 1,
-			Transparency = 0,
+			Transparency = 0.5,
 			ThemeTag = {
 				Color = "ElementBorder",
 			},
@@ -56,7 +56,7 @@ return function(Title, Parent)
 			Position = UDim2.fromOffset(0, 0), -- Positioned at the top of the padding
 			BackgroundTransparency = 1,
 			ThemeTag = {
-				TextColor3 = "SubText", -- Or Text, depending on preference
+				TextColor3 = "Text", -- Changed from SubText to Text for better visibility
 			},
 		}),
 		Section.Container,

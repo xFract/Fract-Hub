@@ -53,61 +53,6 @@ local function GetServerInfo()
 	return playerCount, maxPlayers
 end
 
--- フレンド情報を集計
-local function GetFriendStats()
-	local localPlayer = Players.LocalPlayer
-	local inServer = 0
-	local online = 0
-	local offline = 0
-	local total = 0
-
-	local success, friendPages = pcall(function()
-		return localPlayer:GetFriendsOnline(200)
-	end)
-
-	if success and friendPages then
-		for _, friend in ipairs(friendPages) do
-			total = total + 1
-			-- IsInSameGame フィールドで同一ゲーム内かを判定
-			if friend.PlaceId == game.PlaceId then
-				inServer = inServer + 1
-			else
-				online = online + 1
-			end
-		end
-	end
-
-	-- オフラインフレンド数は正確に取得できないため概算値として表示
-	-- （GetFriendsOnlineはオンラインのみ返すため）
-	offline = 0
-
-	return {
-		InServer = inServer,
-		Online = online,
-		Offline = offline,
-		Total = total,
-	}
-end
-
--- エクスプロイト環境の検出
-local function GetExecutorName()
-	-- 主要エクスプロイト環境の識別関数を確認
-	if identifyexecutor then
-		local success, name = pcall(identifyexecutor)
-		if success and name then
-			return name
-		end
-	end
-	-- フォールバック判定
-	if syn then return "Synapse X"
-	elseif fluxus then return "Fluxus"
-	elseif getexecutorname then
-		local s, n = pcall(getexecutorname)
-		if s then return n end
-	end
-	return "Unknown"
-end
-
 -- リージョン推定（PingベースのJP/US/EU程度の簡易判定）
 local function GetRegion()
 	-- Stats.NetworkのPing値で大まかなリージョンを推定
@@ -129,8 +74,6 @@ function DashboardManager:BuildDashboardTab(tab, config)
 	local gameName = config.GameName or GetGameName()
 	local developer = config.Developer or "Unknown"
 	local discordUrl = config.Discord or ""
-	local changelog = config.Changelog or "No changelog available."
-	local accountStatus = config.AccountStatus or "Coming Soon."
 
 	local localPlayer = Players.LocalPlayer
 	local container = tab.ContainerFrame or tab.Container
@@ -316,18 +259,18 @@ function DashboardManager:BuildDashboardTab(tab, config)
 		end
 	end)
 
-	-- ===== ② Discord / Changelog / Account 行 =====
+	-- ===== ② Discord 行 =====
 	local row1 = MakeRow(2)
 
-	-- Discord カード
+	-- Discord カード（全幅）
 	local discordCard = MakeCard({
-		Size = UDim2.new(0.33, -4, 0, 70),
+		Size = UDim2.new(1, 0, 0, 70),
 		LayoutOrder = 1,
 		Name = "DiscordCard",
 		Parent = row1,
 	})
 	MakeCardTitle(discordCard, "💬", "Discord")
-	local discordSub = MakeSubText(discordCard, "Tap to join the discord of\nyour script.", 24)
+	local discordSub = MakeSubText(discordCard, "Tap to join the discord of your script.", 24)
 
 	-- Discordカードのクリック処理
 	local discordButton = Instance.new("TextButton")
@@ -358,32 +301,12 @@ function DashboardManager:BuildDashboardTab(tab, config)
 		end
 	end)
 
-	-- Changelog カード
-	local changelogCard = MakeCard({
-		Size = UDim2.new(0.34, -4, 0, 70),
-		LayoutOrder = 2,
-		Name = "ChangelogCard",
-		Parent = row1,
-	})
-	MakeCardTitle(changelogCard, "📋", "Changelog")
-	MakeSubText(changelogCard, changelog, 24)
-
-	-- Account カード
-	local accountCard = MakeCard({
-		Size = UDim2.new(0.33, -4, 0, 70),
-		LayoutOrder = 3,
-		Name = "AccountCard",
-		Parent = row1,
-	})
-	MakeCardTitle(accountCard, "👤", "Account")
-	MakeSubText(accountCard, accountStatus, 24)
-
-	-- ===== ③ Server / Velocity / Friends 行 =====
+	-- ===== ③ Server 行 =====
 	local row2 = MakeRow(3)
 
-	-- Server カード（情報量が多いため大きめ）
+	-- Server カード（全幅）
 	local serverCard = MakeCard({
-		Size = UDim2.new(0.38, -4, 0, 160),
+		Size = UDim2.new(1, 0, 0, 160),
 		LayoutOrder = 1,
 		Name = "ServerCard",
 		Parent = row2,
@@ -446,80 +369,6 @@ function DashboardManager:BuildDashboardTab(tab, config)
 	local region = GetRegion()
 	AddServerStat("Players", "~", 0, 2)
 	AddServerStat("Region", region, 1, 2)
-
-	-- Velocity カード
-	local velocityCard = MakeCard({
-		Size = UDim2.new(0.28, -4, 0, 160),
-		LayoutOrder = 2,
-		Name = "VelocityCard",
-		Parent = row2,
-	})
-
-	local executorName = "Unknown"
-	pcall(function()
-		executorName = GetExecutorName()
-	end)
-
-	MakeCardTitle(velocityCard, "⚡", "Velocity")
-	MakeSubText(velocityCard, "Your Executor Seems To Be\nSupported By This Script.", 24)
-	MakeLabel({
-		Text = executorName,
-		TextSize = 12,
-		Font = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-		TextColor3 = Color3.fromRGB(85, 155, 185),
-		Size = UDim2.new(1, 0, 0, 16),
-		Position = UDim2.fromOffset(0, 60),
-		Parent = velocityCard,
-	})
-
-	-- Friends カード
-	local friendsCard = MakeCard({
-		Size = UDim2.new(0.34, -4, 0, 160),
-		LayoutOrder = 3,
-		Name = "FriendsCard",
-		Parent = row2,
-	})
-	MakeCardTitle(friendsCard, "👥", "Friends")
-
-	-- フレンド情報のグリッド表示
-	local friendGridY = 32
-	local function AddFriendStat(label, value, col, row)
-		local xOffset = col * 80
-		local yOffset = friendGridY + (row * 44)
-
-		MakeLabel({
-			Text = label,
-			TextSize = 12,
-			Font = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.SemiBold),
-			TextColor3 = Color3.fromRGB(220, 230, 240),
-			Size = UDim2.new(0, 75, 0, 14),
-			Position = UDim2.fromOffset(xOffset, yOffset),
-			Parent = friendsCard,
-		})
-		local valLabel = MakeLabel({
-			Text = value,
-			TextSize = 10,
-			TextColor3 = Color3.fromRGB(140, 150, 160),
-			Size = UDim2.new(0, 75, 0, 12),
-			Position = UDim2.fromOffset(xOffset, yOffset + 18),
-			Parent = friendsCard,
-		})
-		return valLabel
-	end
-
-	-- フレンド統計を非同期で取得・表示
-	local inServerLabel = AddFriendStat("In Server", "...", 0, 0)
-	local offlineLabel = AddFriendStat("Offline", "...", 1, 0)
-	local onlineLabel = AddFriendStat("Online", "...", 0, 1)
-	local totalLabel = AddFriendStat("Total", "...", 1, 1)
-
-	task.spawn(function()
-		local stats = GetFriendStats()
-		inServerLabel.Text = stats.InServer .. " friends"
-		offlineLabel.Text = stats.Offline .. " friends"
-		onlineLabel.Text = stats.Online .. " friends"
-		totalLabel.Text = stats.Total .. " friends"
-	end)
 
 	return tab
 end

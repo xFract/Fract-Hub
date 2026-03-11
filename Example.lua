@@ -38,9 +38,9 @@ local Window = Fluent:CreateWindow({
     MinimizeKey = Enum.KeyCode.LeftControl
 })
 
-	Window:AddTabSection("Dashboard")
+	Window:AddTabSection("Dashboards")
 	local Tabs = {
-		Main = Window:AddTab({ Title = "Dashboard", Icon = "layout-dashboard" })
+		Main = Window:AddTab({ Title = "Dashboards", Icon = "layout-dashboard" })
 	}
 
 	Window:AddTabSection("Farming")
@@ -139,8 +139,6 @@ DashboardManager:BuildDashboardTab(Tabs.Main, {
     GameName = "Solo Hunter",
     Developer = "xFract",
     Discord = "https://discord.gg/fracthub",
-    Changelog = "Latest",
-    AccountStatus = "Coming Soon.",
 })
 
 InterfaceManager:BuildInterfaceSection(Tabs.Settings)

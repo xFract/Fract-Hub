@@ -22,6 +22,7 @@ function Element:New(Idx, Config)
 		Min = Config.Min,
 		Max = Config.Max,
 		Rounding = Config.Rounding,
+		Suffix = Config.Suffix or "",
 		Callback = Config.Callback or function(Value) end,
 		Type = "Slider",
 	}
@@ -54,12 +55,16 @@ function Element:New(Idx, Config)
 
 	local SliderFill = New("Frame", {
 		Size = UDim2.new(0, 0, 1, 0),
-		ThemeTag = {
-			BackgroundColor3 = "Accent",
-		},
+		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 	}, {
 		New("UICorner", {
 			CornerRadius = UDim.new(1, 0),
+		}),
+		New("UIGradient", {
+			Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 220, 235)), -- Lighter Cyan
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(85, 155, 185)),  -- Accent Cyan
+			}),
 		}),
 	})
 
@@ -68,6 +73,7 @@ function Element:New(Idx, Config)
 		Text = "Value",
 		TextSize = 12,
 		TextWrapped = true,
+		RichText = true,
 		TextXAlignment = Enum.TextXAlignment.Right,
 		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 		BackgroundTransparency = 1,
@@ -141,7 +147,9 @@ function Element:New(Idx, Config)
 		self.Value = Library:Round(math.clamp(Value, Slider.Min, Slider.Max), Slider.Rounding)
 		SliderDot.Position = UDim2.new((self.Value - Slider.Min) / (Slider.Max - Slider.Min), -7, 0.5, 0)
 		SliderFill.Size = UDim2.fromScale((self.Value - Slider.Min) / (Slider.Max - Slider.Min), 1)
-		SliderDisplay.Text = tostring(self.Value)
+		
+		local SuffixStr = self.Suffix == "" and "" or (" " .. self.Suffix)
+		SliderDisplay.Text = "<b>" .. tostring(self.Value) .. "</b>/" .. tostring(Slider.Max) .. SuffixStr
 
 		Library:SafeCallback(Slider.Callback, self.Value)
 		Library:SafeCallback(Slider.Changed, self.Value)

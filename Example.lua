@@ -54,6 +54,7 @@ do
         Min = 1,
         Max = 20,
         Rounding = 1,
+        Suffix = "Studs",
         Callback = function(Value)
             print("Farm Distance:", Value)
         end

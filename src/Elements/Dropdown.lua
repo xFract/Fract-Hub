@@ -220,16 +220,18 @@ function Element:New(Idx, Config)
 
 	-- リストの横幅をボタン幅に合わせつつ、テキスト幅も考慮する
 	local ListSizeX = 0
+	-- 表示上限を5項目分に制限する（各32px + padding 3px = 35px/項目）
+	local MAX_VISIBLE_ITEMS = 5
+	local ITEM_HEIGHT = 35
+	local SEARCH_BAR_HEIGHT = 43 -- 検索バー(28px) + 上余白(5px) + 間隔(10px)
+	local MAX_LIST_HEIGHT = (MAX_VISIBLE_ITEMS * ITEM_HEIGHT) + SEARCH_BAR_HEIGHT + 10
+
 	local function RecalculateListSize()
-		-- ボタン幅を最低幅として使用する
 		local minWidth = math.max(DropdownInner.AbsoluteSize.X, ListSizeX, 170)
-		if #Dropdown.Values > 10 then
-			DropdownHolderCanvas.Size = UDim2.fromOffset(minWidth, 392)
-		else
-			-- 検索バー分(38px) + リスト + 余白
-			local contentHeight = DropdownListLayout.AbsoluteContentSize.Y + 48
-			DropdownHolderCanvas.Size = UDim2.fromOffset(minWidth, math.min(contentHeight, 392))
-		end
+		-- コンテンツ全体の高さ（検索バー + リスト項目 + 余白）
+		local contentHeight = DropdownListLayout.AbsoluteContentSize.Y + SEARCH_BAR_HEIGHT + 10
+		-- 5項目分を超える場合はスクロール可能にする
+		DropdownHolderCanvas.Size = UDim2.fromOffset(minWidth, math.min(contentHeight, MAX_LIST_HEIGHT))
 	end
 
 	local function RecalculateCanvasSize()

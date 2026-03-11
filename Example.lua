@@ -46,7 +46,27 @@ local Options = Fluent.Options
 
 do
     -- Main Tab Elements
-    local AutoAttack = Tabs.Main:AddToggle("AutoAttack", {
+	local FarmPosSection = Tabs.Main:AddSection("Position & Distance")
+    local DamageIncrement = FarmPosSection:AddSlider("DamageIncrement", {
+        Title = "Farm Distance",
+        Description = "Set the distance to farm",
+        Default = 5,
+        Min = 1,
+        Max = 20,
+        Rounding = 1,
+        Callback = function(Value)
+            print("Farm Distance:", Value)
+        end
+    })
+
+	local AutoLevelSection = Tabs.Main:AddSection("Auto Level")
+    local AutoFarm = AutoLevelSection:AddToggle("AutoFarm", {
+        Title = "Auto Level", 
+        Description = "Automatically levels up",
+        Default = false 
+    })
+
+    local AutoAttack = AutoLevelSection:AddToggle("AutoAttack", {
         Title = "Auto Attack", 
         Description = "Automatically attacks mobs",
         Default = false 
@@ -56,31 +76,14 @@ do
         print("Auto Attack:", Options.AutoAttack.Value)
     end)
 
-    local DamageIncrement = Tabs.Main:AddSlider("DamageIncrement", {
-        Title = "Damage Increment",
-        Description = "If too many value will lag",
-        Default = 5,
-        Min = 1,
-        Max = 20,
-        Rounding = 1,
-        Callback = function(Value)
-            print("Damage Increment:", Value)
-        end
-    })
-
-    local AutoFarm = Tabs.Main:AddToggle("AutoFarm", {
-        Title = "Auto Farm", 
-        Description = "Automatically teleports to mobs",
-        Default = false 
-    })
-
-    local AutoLootChests = Tabs.Main:AddToggle("AutoLootChests", {
+	local LootSection = Tabs.Main:AddSection("Looting")
+    local AutoLootChests = LootSection:AddToggle("AutoLootChests", {
         Title = "Auto Loot Chests", 
         Description = "Automatically loots chests",
         Default = false 
     })
 
-    local AutoLootDrops = Tabs.Main:AddToggle("AutoLootDrops", {
+    local AutoLootDrops = LootSection:AddToggle("AutoLootDrops", {
         Title = "Auto Loot Drops", 
         Description = "Automatically loots drops",
         Default = false 

@@ -9,6 +9,7 @@ local Stats = game:GetService("Stats")
 local DashboardManager = {}
 
 DashboardManager.Library = nil
+DashboardManager.Tab = nil
 
 function DashboardManager:SetLibrary(library)
 	self.Library = library
@@ -67,8 +68,14 @@ local function GetRegion()
 	else return "EU" end
 end
 
-function DashboardManager:BuildDashboardTab(tab, config)
+function DashboardManager:BuildDashboardTab(window, config)
 	assert(self.Library, "Must set DashboardManager.Library first")
+	assert(window, "Must pass Window object")
+
+	-- ダッシュボードタブを自動生成
+	window:AddTabSection("Dashboards")
+	local tab = window:AddTab({ Title = "Dashboards", Icon = "layout-dashboard" })
+	self.Tab = tab
 
 	config = config or {}
 	local gameName = config.GameName or GetGameName()

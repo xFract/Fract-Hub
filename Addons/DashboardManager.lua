@@ -281,7 +281,7 @@ function DashboardManager:BuildDashboardTab(window, config)
 
 	-- ユーザー名とあいさつ
 	MakeLabel({
-		Text = "Welcome, " .. localPlayer.DisplayName,
+		Text = localPlayer.DisplayName,
 		TextSize = 18,
 		Font = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold),
 		TextColor3 = Color3.fromRGB(240, 250, 255),
@@ -291,7 +291,7 @@ function DashboardManager:BuildDashboardTab(window, config)
 	})
 
 	MakeLabel({
-		Text = "How's Your Day Going? | " .. localPlayer.Name,
+		Text = "Welcome, " .. localPlayer.Name,
 		TextSize = 11,
 		TextColor3 = Color3.fromRGB(160, 170, 180),
 		Size = UDim2.new(1, -130, 0, 14),

@@ -30,7 +30,7 @@ local Window = Fluent:CreateWindow({
     Title = "Fract Hub",
     SubTitle = "Solo Hunter",
     TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
+    Size = UDim2.fromOffset(520, 380),
     Acrylic = true,
     Theme = "Cyan",
     Logo = "rbxassetid://92450040427767", -- ここにRobloxにアップロードしたロゴの画像IDを入れてください
@@ -83,7 +83,7 @@ do
 	local AutoLevelSection = Tabs.Main:AddSection("Auto Level")
     local AutoFarm = AutoLevelSection:AddToggle("AutoFarm", {
         Title = "Auto Level", 
-        Description = "Automatically levels up",
+        Description = "Automatically levels upaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         Default = false 
     })
 

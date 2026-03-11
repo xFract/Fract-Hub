@@ -30,7 +30,7 @@ function Element:New(Idx, Config)
 	local Dragging = false
 
 	local SliderFrame = require(Components.Element)(Config.Title, Config.Description, self.Container, false)
-	SliderFrame.DescLabel.Size = UDim2.new(1, -210, 0, 14)
+	SliderFrame.DescLabel.Size = UDim2.new(0.5, 0, 0, 14)
 
 	Slider.SetTitle = SliderFrame.SetTitle
 	Slider.SetDesc = SliderFrame.SetDesc
@@ -86,7 +86,7 @@ function Element:New(Idx, Config)
 	})
 
 	local SliderInner = New("Frame", {
-		Size = UDim2.new(1, 0, 0, 4),
+		Size = UDim2.new(0.45, 0, 0, 4),
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.new(1, -10, 0.5, 8),
 		BackgroundTransparency = 0.4,

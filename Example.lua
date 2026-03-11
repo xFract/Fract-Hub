@@ -80,6 +80,18 @@ do
         end
     })
 
+	local DropdownSection = Tabs.Main:AddSection("Target Selection")
+    local TargetDropdown = DropdownSection:AddDropdown("TargetMob", {
+        Title = "Target Mob",
+        Description = "Select the mob to target",
+        Values = {"AcademyTeacher", "Curse", "DesertBandit", "DesertBoss", "Thief", "Warrior", "Skeleton", "Dragon", "Goblin", "Slime"},
+        Default = "Thief",
+        Multi = false,
+        Callback = function(Value)
+            print("Target:", Value)
+        end
+    })
+
 	local AutoLevelSection = Tabs.Main:AddSection("Auto Level")
     local AutoFarm = AutoLevelSection:AddToggle("AutoFarm", {
         Title = "Auto Level", 

@@ -24,6 +24,7 @@ return {
 	DropdownHolder = Color3.fromRGB(20, 25, 35),
 	DropdownBorder = Color3.fromRGB(40, 45, 55),
 	DropdownOption = Color3.fromRGB(35, 40, 50),
+	DropdownSearch = Color3.fromRGB(15, 18, 25),
 
 	Keybind = Color3.fromRGB(35, 40, 50),
 

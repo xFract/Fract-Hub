@@ -33,6 +33,7 @@ function Element:New(Idx, Config)
 	Dropdown.SetTitle = DropdownFrame.SetTitle
 	Dropdown.SetDesc = DropdownFrame.SetDesc
 
+	-- 選択中の値を表示するラベル
 	local DropdownDisplay = New("TextLabel", {
 		FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
 		Text = "Value",
@@ -50,17 +51,21 @@ function Element:New(Idx, Config)
 		},
 	})
 
-	local DropdownIco = New("ImageLabel", {
-		Image = "rbxassetid://10709790948",
+	-- 上下矢印アイコン（chevrons-up-downに相当する文字表記）
+	local DropdownIco = New("TextLabel", {
+		Text = "⇅",
+		TextSize = 14,
+		FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
 		Size = UDim2.fromOffset(16, 16),
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.new(1, -8, 0.5, 0),
 		BackgroundTransparency = 1,
 		ThemeTag = {
-			ImageColor3 = "SubText",
+			TextColor3 = "SubText",
 		},
 	})
 
+	-- ドロップダウンのトリガーボタン
 	local DropdownInner = New("TextButton", {
 		Size = UDim2.fromOffset(160, 30),
 		Position = UDim2.new(1, -10, 0.5, 0),
@@ -85,13 +90,59 @@ function Element:New(Idx, Config)
 		DropdownDisplay,
 	})
 
+	-- ===== ポップアップリスト内の検索バー =====
+	local SearchIndicator = New("Frame", {
+		Size = UDim2.new(1, -4, 0, 1),
+		Position = UDim2.new(0, 2, 1, 0),
+		AnchorPoint = Vector2.new(0, 1),
+		BackgroundTransparency = 0,
+		ThemeTag = {
+			BackgroundColor3 = "Accent",
+		},
+	})
+
+	local SearchBox = New("TextBox", {
+		FontFace = Font.new("rbxasset://fonts/families/GothamSSm.json"),
+		PlaceholderText = "Search...",
+		Text = "",
+		TextColor3 = Color3.fromRGB(240, 240, 240),
+		TextSize = 13,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		ClearTextOnFocus = false,
+		BackgroundTransparency = 1,
+		Size = UDim2.new(1, -16, 1, 0),
+		Position = UDim2.fromOffset(8, 0),
+		ThemeTag = {
+			TextColor3 = "Text",
+			PlaceholderColor3 = "SubText",
+		},
+	})
+
+	local SearchBarFrame = New("Frame", {
+		Size = UDim2.new(1, -10, 0, 28),
+		Position = UDim2.fromOffset(5, 5),
+		BackgroundTransparency = 0,
+		ThemeTag = {
+			BackgroundColor3 = "DropdownSearch",
+		},
+	}, {
+		New("UICorner", {
+			CornerRadius = UDim.new(0, 4),
+		}),
+		SearchIndicator,
+		SearchBox,
+	})
+
+	-- ===== スクロール可能な選択肢リスト =====
 	local DropdownListLayout = New("UIListLayout", {
 		Padding = UDim.new(0, 3),
 	})
 
 	local DropdownScrollFrame = New("ScrollingFrame", {
-		Size = UDim2.new(1, -5, 1, -10),
-		Position = UDim2.fromOffset(5, 5),
+		-- 検索バー(28px) + 上余白(5px) + 間隔(5px) = 38px分だけ上から空ける
+		Size = UDim2.new(1, -5, 1, -43),
+		Position = UDim2.fromOffset(5, 38),
 		BackgroundTransparency = 1,
 		BottomImage = "rbxassetid://6889812791",
 		MidImage = "rbxassetid://6889812721",
@@ -105,12 +156,14 @@ function Element:New(Idx, Config)
 		DropdownListLayout,
 	})
 
+	-- ポップアップの外枠（DropdownHolder）
 	local DropdownHolderFrame = New("Frame", {
 		Size = UDim2.fromScale(1, 0.6),
 		ThemeTag = {
 			BackgroundColor3 = "DropdownHolder",
 		},
 	}, {
+		SearchBarFrame,
 		DropdownScrollFrame,
 		New("UICorner", {
 			CornerRadius = UDim.new(0, 7),
@@ -121,6 +174,7 @@ function Element:New(Idx, Config)
 				Color = "DropdownBorder",
 			},
 		}),
+		-- ドロップシャドウ
 		New("ImageLabel", {
 			BackgroundTransparency = 1,
 			Image = "http://www.roblox.com/asset/?id=5554236805",
@@ -133,6 +187,7 @@ function Element:New(Idx, Config)
 		}),
 	})
 
+	-- ポップアップのキャンバス（位置制御用）
 	local DropdownHolderCanvas = New("Frame", {
 		BackgroundTransparency = 1,
 		Size = UDim2.fromOffset(170, 300),
@@ -146,25 +201,34 @@ function Element:New(Idx, Config)
 	})
 	table.insert(Library.OpenFrames, DropdownHolderCanvas)
 
+	-- ポップアップをドロップダウンボタンの直下に配置する
 	local function RecalculateListPosition()
-		local Add = 0
-		if Camera.ViewportSize.Y - DropdownInner.AbsolutePosition.Y < DropdownHolderCanvas.AbsoluteSize.Y - 5 then
-			Add = DropdownHolderCanvas.AbsoluteSize.Y
-				- 5
-				- (Camera.ViewportSize.Y - DropdownInner.AbsolutePosition.Y)
-				+ 40
+		local buttonPos = DropdownInner.AbsolutePosition
+		local buttonSize = DropdownInner.AbsoluteSize
+
+		-- ボタン直下を基準位置とする
+		local targetY = buttonPos.Y + buttonSize.Y + 2
+		local targetX = buttonPos.X
+
+		-- 画面下にはみ出す場合は上方向に展開する
+		if targetY + DropdownHolderCanvas.AbsoluteSize.Y > Camera.ViewportSize.Y - 10 then
+			targetY = buttonPos.Y - DropdownHolderCanvas.AbsoluteSize.Y - 2
 		end
-		-- 右側に被らないよう左側にリストを展開する (ボタンの左端 - リスト幅 - 余白5x程度を基準とする)
-		DropdownHolderCanvas.Position =
-			UDim2.fromOffset(DropdownInner.AbsolutePosition.X - DropdownHolderCanvas.AbsoluteSize.X - 5, DropdownInner.AbsolutePosition.Y - 5 - Add)
+
+		DropdownHolderCanvas.Position = UDim2.fromOffset(targetX, targetY)
 	end
 
+	-- リストの横幅をボタン幅に合わせつつ、テキスト幅も考慮する
 	local ListSizeX = 0
 	local function RecalculateListSize()
+		-- ボタン幅を最低幅として使用する
+		local minWidth = math.max(DropdownInner.AbsoluteSize.X, ListSizeX, 170)
 		if #Dropdown.Values > 10 then
-			DropdownHolderCanvas.Size = UDim2.fromOffset(ListSizeX, 392)
+			DropdownHolderCanvas.Size = UDim2.fromOffset(minWidth, 392)
 		else
-			DropdownHolderCanvas.Size = UDim2.fromOffset(ListSizeX, DropdownListLayout.AbsoluteContentSize.Y + 10)
+			-- 検索バー分(38px) + リスト + 余白
+			local contentHeight = DropdownListLayout.AbsoluteContentSize.Y + 48
+			DropdownHolderCanvas.Size = UDim2.fromOffset(minWidth, math.min(contentHeight, 392))
 		end
 	end
 
@@ -185,6 +249,7 @@ function Element:New(Idx, Config)
 		end
 	end)
 
+	-- ポップアップ外クリックで閉じる判定（検索バーのフォーカスも考慮）
 	Creator.AddSignal(UserInputService.InputBegan, function(Input)
 		if
 			Input.UserInputType == Enum.UserInputType.MouseButton1
@@ -202,21 +267,44 @@ function Element:New(Idx, Config)
 		end
 	end)
 
+	-- ===== 検索フィルタリング処理 =====
+	local function FilterDropdownList(searchText)
+		local lowerSearch = string.lower(searchText)
+		for ButtonInstance, Table in next, Dropdown.Buttons do
+			if ButtonInstance:FindFirstChild("ButtonLabel") then
+				local labelText = string.lower(ButtonInstance.ButtonLabel.Text)
+				-- 検索テキストが空なら全表示、そうでなければ部分一致でフィルタ
+				local shouldShow = (lowerSearch == "" or string.find(labelText, lowerSearch, 1, true) ~= nil)
+				ButtonInstance.Visible = shouldShow
+			end
+		end
+		RecalculateCanvasSize()
+		RecalculateListSize()
+		RecalculateListPosition()
+	end
+
+	Creator.AddSignal(SearchBox:GetPropertyChangedSignal("Text"), function()
+		FilterDropdownList(SearchBox.Text)
+	end)
+
 	local ScrollFrame = self.ScrollFrame
 	function Dropdown:Open()
 		Dropdown.Opened = true
 		ScrollFrame.ScrollingEnabled = false
+		-- 検索テキストをクリアして全項目を表示
+		SearchBox.Text = ""
+		FilterDropdownList("")
 		DropdownHolderCanvas.Visible = true
+		RecalculateListPosition()
 		TweenService:Create(
 			DropdownHolderFrame,
 			TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
 			{ Size = UDim2.fromScale(1, 1) }
 		):Play()
-		TweenService:Create(
-			DropdownIco,
-			TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
-			{ Rotation = 90 }
-		):Play()
+		-- 検索バーにフォーカスを当てる（操作効率のため）
+		task.defer(function()
+			SearchBox:CaptureFocus()
+		end)
 	end
 
 	function Dropdown:Close()
@@ -224,11 +312,7 @@ function Element:New(Idx, Config)
 		ScrollFrame.ScrollingEnabled = true
 		DropdownHolderFrame.Size = UDim2.fromScale(1, 0.6)
 		DropdownHolderCanvas.Visible = false
-		TweenService:Create(
-			DropdownIco,
-			TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
-			{ Rotation = 0 }
-		):Play()
+		SearchBox:ReleaseFocus()
 	end
 
 	function Dropdown:Display()
@@ -280,6 +364,7 @@ function Element:New(Idx, Config)
 
 			Count = Count + 1
 
+			-- 選択状態を示す左端のアクセントバー
 			local ButtonSelector = New("Frame", {
 				Size = UDim2.fromOffset(4, 14),
 				BackgroundColor3 = Color3.fromRGB(76, 194, 255),
@@ -418,6 +503,7 @@ function Element:New(Idx, Config)
 		end
 		ListSizeX = ListSizeX + 30
 
+		Dropdown.Buttons = Buttons
 		RecalculateCanvasSize()
 		RecalculateListSize()
 	end

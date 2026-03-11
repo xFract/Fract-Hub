@@ -18,6 +18,8 @@ return {
 	DropdownFrame = Color3.fromRGB(120, 120, 120),
 	DropdownHolder = Color3.fromRGB(35, 35, 35),
 	DropdownBorder = Color3.fromRGB(25, 25, 25),
+	DropdownOption = Color3.fromRGB(70, 70, 70),
+	DropdownSearch = Color3.fromRGB(20, 20, 20),
 
 	Dialog = Color3.fromRGB(35, 35, 35),
 	DialogHolder = Color3.fromRGB(25, 25, 25),

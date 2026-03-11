@@ -251,12 +251,22 @@ function Element:New(Idx, Config)
 		end
 	end)
 
-	-- ポップアップ外クリックで閉じる判定（検索バーのフォーカスも考慮）
+	-- ポップアップ外クリックで閉じる判定（ドロップダウンボタン自体のクリックは除外）
 	Creator.AddSignal(UserInputService.InputBegan, function(Input)
 		if
 			Input.UserInputType == Enum.UserInputType.MouseButton1
 			or Input.UserInputType == Enum.UserInputType.Touch
 		then
+			-- ドロップダウンボタン上のクリックは MouseButton1Click に任せるため除外する
+			local btnPos, btnSize = DropdownInner.AbsolutePosition, DropdownInner.AbsoluteSize
+			local isOnButton = Mouse.X >= btnPos.X
+				and Mouse.X <= btnPos.X + btnSize.X
+				and Mouse.Y >= btnPos.Y
+				and Mouse.Y <= btnPos.Y + btnSize.Y
+			if isOnButton then
+				return
+			end
+
 			local AbsPos, AbsSize = DropdownHolderFrame.AbsolutePosition, DropdownHolderFrame.AbsoluteSize
 			if
 				Mouse.X < AbsPos.X

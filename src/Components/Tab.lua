@@ -18,6 +18,12 @@ local TabModule = {
 local COLUMN_GAP = 8
 local COLUMN_BREAKPOINT = 760
 
+local function bindCanvasSize(ScrollFrame, Layout)
+	Creator.AddSignal(Layout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+		ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 2)
+	end)
+end
+
 function TabModule:Init(Window)
 	TabModule.Window = Window
 	return TabModule
@@ -110,6 +116,8 @@ function TabModule:New(Title, Icon, Parent)
 		BorderSizePixel = 0,
 		CanvasSize = UDim2.fromScale(0, 0),
 		ScrollingDirection = Enum.ScrollingDirection.Y,
+		ScrollingEnabled = false,
+		ScrollBarThickness = 0,
 	}, {
 		New("UIPadding", {
 			PaddingRight = UDim.new(0, 10),
@@ -118,6 +126,79 @@ function TabModule:New(Title, Icon, Parent)
 			PaddingBottom = UDim.new(0, 1),
 		}),
 	})
+
+	local SingleLayout = New("UIListLayout", {
+		Padding = UDim.new(0, COLUMN_GAP),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+	})
+
+	local LeftLayout = New("UIListLayout", {
+		Padding = UDim.new(0, COLUMN_GAP),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+	})
+
+	local RightLayout = New("UIListLayout", {
+		Padding = UDim.new(0, COLUMN_GAP),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+	})
+
+	Tab.SingleScrollFrame = New("ScrollingFrame", {
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		Parent = Tab.ContainerFrame,
+		BottomImage = "rbxassetid://6889812791",
+		MidImage = "rbxassetid://6889812721",
+		TopImage = "rbxassetid://6276641225",
+		ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255),
+		ScrollBarImageTransparency = 0.95,
+		ScrollBarThickness = 3,
+		BorderSizePixel = 0,
+		CanvasSize = UDim2.fromScale(0, 0),
+		ScrollingDirection = Enum.ScrollingDirection.Y,
+	}, {
+		SingleLayout,
+	})
+
+	Tab.LeftScrollFrame = New("ScrollingFrame", {
+		Size = UDim2.new(0.5, -(COLUMN_GAP / 2), 1, 0),
+		BackgroundTransparency = 1,
+		Parent = Tab.ContainerFrame,
+		Visible = false,
+		BottomImage = "rbxassetid://6889812791",
+		MidImage = "rbxassetid://6889812721",
+		TopImage = "rbxassetid://6276641225",
+		ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255),
+		ScrollBarImageTransparency = 0.95,
+		ScrollBarThickness = 3,
+		BorderSizePixel = 0,
+		CanvasSize = UDim2.fromScale(0, 0),
+		ScrollingDirection = Enum.ScrollingDirection.Y,
+	}, {
+		LeftLayout,
+	})
+
+	Tab.RightScrollFrame = New("ScrollingFrame", {
+		Size = UDim2.new(0.5, -(COLUMN_GAP / 2), 1, 0),
+		Position = UDim2.new(0.5, (COLUMN_GAP / 2), 0, 0),
+		BackgroundTransparency = 1,
+		Parent = Tab.ContainerFrame,
+		Visible = false,
+		BottomImage = "rbxassetid://6889812791",
+		MidImage = "rbxassetid://6889812721",
+		TopImage = "rbxassetid://6276641225",
+		ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255),
+		ScrollBarImageTransparency = 0.95,
+		ScrollBarThickness = 3,
+		BorderSizePixel = 0,
+		CanvasSize = UDim2.fromScale(0, 0),
+		ScrollingDirection = Enum.ScrollingDirection.Y,
+	}, {
+		RightLayout,
+	})
+
+	bindCanvasSize(Tab.SingleScrollFrame, SingleLayout)
+	bindCanvasSize(Tab.LeftScrollFrame, LeftLayout)
+	bindCanvasSize(Tab.RightScrollFrame, RightLayout)
 
 	Tab.Sections = {}
 
@@ -128,28 +209,44 @@ function TabModule:New(Title, Icon, Parent)
 		end
 
 		local isCompact = contentWidth < COLUMN_BREAKPOINT
-		local columnWidth = isCompact and contentWidth or math.floor((contentWidth - COLUMN_GAP) / 2)
-		local leftHeight = 1
-		local rightHeight = 1
+		Tab.SingleScrollFrame.Visible = isCompact
+		Tab.LeftScrollFrame.Visible = not isCompact
+		Tab.RightScrollFrame.Visible = not isCompact
 
-		for index, sectionData in ipairs(Tab.Sections) do
+		local singleOrder = 0
+		local leftOrder = 0
+		local rightOrder = 0
+		local leftHeight = 0
+		local rightHeight = 0
+
+		for _, sectionData in ipairs(Tab.Sections) do
 			local sectionRoot = sectionData.Root
 			local sectionHeight = sectionRoot.AbsoluteSize.Y > 0 and sectionRoot.AbsoluteSize.Y or sectionRoot.Size.Y.Offset
 
-			sectionRoot.Size = UDim2.new(0, columnWidth, 0, sectionRoot.Size.Y.Offset)
-
-			if isCompact or leftHeight <= rightHeight then
-				sectionRoot.Position = UDim2.fromOffset(1, leftHeight)
-				leftHeight = leftHeight + sectionHeight + COLUMN_GAP
+			if isCompact then
+				singleOrder = singleOrder + 1
+				sectionRoot.Parent = Tab.SingleScrollFrame
+				sectionRoot.Size = UDim2.new(1, 0, 0, sectionRoot.Size.Y.Offset)
+				sectionRoot.LayoutOrder = singleOrder
+				sectionData.ApiSection.ScrollFrame = Tab.SingleScrollFrame
 			else
-				sectionRoot.Position = UDim2.fromOffset(columnWidth + COLUMN_GAP + 1, rightHeight)
-				rightHeight = rightHeight + sectionHeight + COLUMN_GAP
+				if leftHeight <= rightHeight then
+					leftOrder = leftOrder + 1
+					sectionRoot.Parent = Tab.LeftScrollFrame
+					sectionRoot.Size = UDim2.new(1, 0, 0, sectionRoot.Size.Y.Offset)
+					sectionRoot.LayoutOrder = leftOrder
+					sectionData.ApiSection.ScrollFrame = Tab.LeftScrollFrame
+					leftHeight = leftHeight + sectionHeight + COLUMN_GAP
+				else
+					rightOrder = rightOrder + 1
+					sectionRoot.Parent = Tab.RightScrollFrame
+					sectionRoot.Size = UDim2.new(1, 0, 0, sectionRoot.Size.Y.Offset)
+					sectionRoot.LayoutOrder = rightOrder
+					sectionData.ApiSection.ScrollFrame = Tab.RightScrollFrame
+					rightHeight = rightHeight + sectionHeight + COLUMN_GAP
+				end
 			end
-
-			sectionRoot.LayoutOrder = index
 		end
-
-		Tab.ContainerFrame.CanvasSize = UDim2.new(0, 0, 0, math.max(leftHeight, rightHeight) + 1)
 	end
 
 	Creator.AddSignal(Tab.ContainerFrame:GetPropertyChangedSignal("AbsoluteSize"), function()
@@ -177,18 +274,21 @@ function TabModule:New(Title, Icon, Parent)
 	TabModule.Containers[TabIndex] = Tab.ContainerFrame
 	TabModule.Tabs[TabIndex] = Tab
 
-	Tab.Container = Tab.ContainerFrame
-	Tab.ScrollFrame = Tab.Container
+	Tab.Container = Tab.SingleScrollFrame
+	Tab.ScrollFrame = Tab.SingleScrollFrame
 
 	function Tab:AddSection(SectionTitle)
 		local Section = { Type = "Section" }
 
-		local SectionFrame = require(Components.Section)(SectionTitle, Tab.Container)
+		local SectionFrame = require(Components.Section)(SectionTitle, Tab.SingleScrollFrame)
 		Section.Container = SectionFrame.Container
 		Section.Root = SectionFrame.Root
-		Section.ScrollFrame = Tab.Container
+		Section.ScrollFrame = Tab.SingleScrollFrame
 
-		table.insert(Tab.Sections, SectionFrame)
+		table.insert(Tab.Sections, {
+			Root = SectionFrame.Root,
+			ApiSection = Section,
+		})
 
 		Creator.AddSignal(SectionFrame.Root:GetPropertyChangedSignal("AbsoluteSize"), function()
 			Tab:RelayoutSections()

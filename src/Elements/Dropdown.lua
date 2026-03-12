@@ -313,10 +313,6 @@ function Element:New(Idx, Config)
 			TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
 			{ Size = UDim2.fromScale(1, 1) }
 		):Play()
-		-- 検索バーにフォーカスを当てる（操作効率のため）
-		task.defer(function()
-			SearchBox:CaptureFocus()
-		end)
 	end
 
 	function Dropdown:Close()

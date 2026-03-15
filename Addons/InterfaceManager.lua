@@ -132,25 +132,159 @@ local InterfaceManager = {} do
         end
     end
 
-    function InterfaceManager:CanJoinPrivateServer()
-        local code = self.Settings.PrivateServerCode
-        return type(code) == "string" and code ~= ""
+    function InterfaceManager:Notify(title, content, subContent)
+        if self.Library and self.Library.Notify then
+            self.Library:Notify({
+                Title = title,
+                Content = content,
+                SubContent = subContent,
+                Duration = 6,
+            })
+        end
     end
 
-    function InterfaceManager:JoinPrivateServer()
-        if not self:CanJoinPrivateServer() then
+    function InterfaceManager:GetQueryParam(url, key)
+        local pattern = "[?&]" .. key .. "=([^&]+)"
+        local value = string.match(url, pattern)
+        if value and value ~= "" then
+            return httpService:UrlDecode(value)
+        end
+
+        return nil
+    end
+
+    function InterfaceManager:ParseServerTarget(rawValue)
+        local value = tostring(rawValue or ""):match("^%s*(.-)%s*$")
+        if value == "" then
+            return nil
+        end
+
+        local privateServerCode = self:GetQueryParam(value, "privateServerLinkCode")
+            or self:GetQueryParam(value, "reservedServerAccessCode")
+
+        if privateServerCode then
+            return {
+                Kind = "PrivateServer",
+                Code = privateServerCode,
+                Raw = value,
+            }
+        end
+
+        local shareCode = self:GetQueryParam(value, "code")
+        local shareType = self:GetQueryParam(value, "type")
+        if shareCode and shareType then
+            return {
+                Kind = "ShareLink",
+                Code = shareCode,
+                LinkType = shareType,
+                Raw = value,
+            }
+        end
+
+        if value:match("^https?://") or value:match("^roblox://") then
+            return {
+                Kind = "Link",
+                Raw = value,
+            }
+        end
+
+        return {
+            Kind = "PrivateServer",
+            Code = value,
+            Raw = value,
+        }
+    end
+
+    function InterfaceManager:CanJoinPrivateServer()
+        return self:ParseServerTarget(self.Settings.PrivateServerCode) ~= nil
+    end
+
+    function InterfaceManager:TryCopyToClipboard(value)
+        local copy = setclipboard or toclipboard
+        if type(copy) ~= "function" then
             return false
         end
 
-        local success = pcall(function()
-            TeleportService:TeleportToPrivateServer(
-                game.PlaceId,
-                self.Settings.PrivateServerCode,
-                { Players.LocalPlayer }
-            )
+        return pcall(copy, value)
+    end
+
+    function InterfaceManager:TryOpenExternalLink(url)
+        local opened = false
+
+        pcall(function()
+            local BrowserService = game:GetService("BrowserService")
+            if BrowserService and BrowserService.OpenBrowserWindow then
+                BrowserService:OpenBrowserWindow(url)
+                opened = true
+            end
         end)
 
-        return success
+        if opened then
+            return true
+        end
+
+        pcall(function()
+            local GuiService = game:GetService("GuiService")
+            if GuiService and GuiService.OpenBrowserWindow then
+                GuiService:OpenBrowserWindow(url)
+                opened = true
+            end
+        end)
+
+        return opened
+    end
+
+    function InterfaceManager:JoinPrivateServer()
+        local target = self:ParseServerTarget(self.Settings.PrivateServerCode)
+        if not target then
+            self:Notify("Server Join", "リンクまたはコードが未設定です。")
+            return false
+        end
+
+        if target.Kind == "PrivateServer" then
+            local success = pcall(function()
+                TeleportService:TeleportToPrivateServer(
+                    game.PlaceId,
+                    target.Code,
+                    { Players.LocalPlayer }
+                )
+            end)
+
+            if not success then
+                self:Notify("Server Join", "プライベートサーバーへの参加に失敗しました。", "コードが無効な可能性があります。")
+            end
+
+            return success
+        end
+
+        if target.Kind == "ShareLink" then
+            local websiteUrl = string.format(
+                "https://www.roblox.com/share?code=%s&type=%s",
+                httpService:UrlEncode(target.Code),
+                httpService:UrlEncode(target.LinkType)
+            )
+            local deepLinkUrl = string.format(
+                "roblox://navigation/share_links?code=%s&type=%s",
+                httpService:UrlEncode(target.Code),
+                httpService:UrlEncode(target.LinkType)
+            )
+
+            if self:TryOpenExternalLink(deepLinkUrl) or self:TryOpenExternalLink(websiteUrl) then
+                self:Notify("Server Join", "共有リンクを開きました。", "Roblox クライアント側で参加処理が続行されます。")
+                return true
+            end
+
+            if self:TryCopyToClipboard(websiteUrl) then
+                self:Notify("Server Join", "共有リンクをクリップボードにコピーしました。", "ブラウザで開くと参加できます。")
+                return true
+            end
+
+            self:Notify("Server Join", "共有リンクは自動参加できませんでした。", "外部リンク起動に非対応の環境です。")
+            return false
+        end
+
+        self:Notify("Server Join", "そのリンク形式はこの環境では直接参加できません。")
+        return false
     end
 
     -- Discord Webhookへの通知送信
@@ -510,7 +644,7 @@ local InterfaceManager = {} do
         })
 
         ServerSection:AddToggle("UsePrivateServerToggle", {
-            Title = "Use Private Server",
+            Title = "Use Saved Server Target",
             Default = Settings.UsePrivateServer,
             Callback = function(Value)
                 Settings.UsePrivateServer = Value
@@ -519,11 +653,11 @@ local InterfaceManager = {} do
         })
 
         ServerSection:AddInput("PrivateServerCodeInput", {
-            Title = "Private Server Code",
+            Title = "Server Link / Access Code",
             Default = Settings.PrivateServerCode,
             Numeric = false,
             Finished = true,
-            Placeholder = "ReservedServerAccessCode",
+            Placeholder = "share URL or private server code",
             Callback = function(Value)
                 Settings.PrivateServerCode = Value
                 InterfaceManager:SaveSettings()
@@ -554,7 +688,7 @@ local InterfaceManager = {} do
         })
 
         ServerSection:AddButton({
-            Title = "Join Private Server",
+            Title = "Join Saved Server",
             Callback = function()
                 InterfaceManager:JoinPrivateServer()
             end

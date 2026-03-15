@@ -17,8 +17,6 @@ local InterfaceManager = {} do
         FPSCap = 60,
         AutoRejoin = false,
         LowPlayerHop = false,
-        UsePrivateServer = false,
-        PrivateServerCode = "",
         StaffDetector = false,
         WebhookURL = "",
     }
@@ -143,150 +141,6 @@ local InterfaceManager = {} do
         end
     end
 
-    function InterfaceManager:GetQueryParam(url, key)
-        local pattern = "[?&]" .. key .. "=([^&]+)"
-        local value = string.match(url, pattern)
-        if value and value ~= "" then
-            return httpService:UrlDecode(value)
-        end
-
-        return nil
-    end
-
-    function InterfaceManager:ParseServerTarget(rawValue)
-        local value = tostring(rawValue or ""):match("^%s*(.-)%s*$")
-        if value == "" then
-            return nil
-        end
-
-        local privateServerCode = self:GetQueryParam(value, "privateServerLinkCode")
-            or self:GetQueryParam(value, "reservedServerAccessCode")
-
-        if privateServerCode then
-            return {
-                Kind = "PrivateServer",
-                Code = privateServerCode,
-                Raw = value,
-            }
-        end
-
-        local shareCode = self:GetQueryParam(value, "code")
-        local shareType = self:GetQueryParam(value, "type")
-        if shareCode and shareType then
-            return {
-                Kind = "ShareLink",
-                Code = shareCode,
-                LinkType = shareType,
-                Raw = value,
-            }
-        end
-
-        if value:match("^https?://") or value:match("^roblox://") then
-            return {
-                Kind = "Link",
-                Raw = value,
-            }
-        end
-
-        return {
-            Kind = "PrivateServer",
-            Code = value,
-            Raw = value,
-        }
-    end
-
-    function InterfaceManager:CanJoinPrivateServer()
-        return self:ParseServerTarget(self.Settings.PrivateServerCode) ~= nil
-    end
-
-    function InterfaceManager:TryCopyToClipboard(value)
-        local copy = setclipboard or toclipboard
-        if type(copy) ~= "function" then
-            return false
-        end
-
-        return pcall(copy, value)
-    end
-
-    function InterfaceManager:TryOpenExternalLink(url)
-        local opened = false
-
-        pcall(function()
-            local BrowserService = game:GetService("BrowserService")
-            if BrowserService and BrowserService.OpenBrowserWindow then
-                BrowserService:OpenBrowserWindow(url)
-                opened = true
-            end
-        end)
-
-        if opened then
-            return true
-        end
-
-        pcall(function()
-            local GuiService = game:GetService("GuiService")
-            if GuiService and GuiService.OpenBrowserWindow then
-                GuiService:OpenBrowserWindow(url)
-                opened = true
-            end
-        end)
-
-        return opened
-    end
-
-    function InterfaceManager:JoinPrivateServer()
-        local target = self:ParseServerTarget(self.Settings.PrivateServerCode)
-        if not target then
-            self:Notify("Server Join", "リンクまたはコードが未設定です。")
-            return false
-        end
-
-        if target.Kind == "PrivateServer" then
-            local success = pcall(function()
-                TeleportService:TeleportToPrivateServer(
-                    game.PlaceId,
-                    target.Code,
-                    { Players.LocalPlayer }
-                )
-            end)
-
-            if not success then
-                self:Notify("Server Join", "プライベートサーバーへの参加に失敗しました。", "コードが無効な可能性があります。")
-            end
-
-            return success
-        end
-
-        if target.Kind == "ShareLink" then
-            local websiteUrl = string.format(
-                "https://www.roblox.com/share?code=%s&type=%s",
-                httpService:UrlEncode(target.Code),
-                httpService:UrlEncode(target.LinkType)
-            )
-            local deepLinkUrl = string.format(
-                "roblox://navigation/share_links?code=%s&type=%s",
-                httpService:UrlEncode(target.Code),
-                httpService:UrlEncode(target.LinkType)
-            )
-
-            if self:TryOpenExternalLink(deepLinkUrl) or self:TryOpenExternalLink(websiteUrl) then
-                self:Notify("Server Join", "共有リンクを開きました。", "Roblox クライアント側で参加処理が続行されます。")
-                return true
-            end
-
-            if self:TryCopyToClipboard(websiteUrl) then
-                self:Notify("Server Join", "共有リンクをクリップボードにコピーしました。", "ブラウザで開くと参加できます。")
-                return true
-            end
-
-            self:Notify("Server Join", "共有リンクは自動参加できませんでした。", "外部リンク起動に非対応の環境です。")
-            return false
-        end
-
-        self:Notify("Server Join", "そのリンク形式はこの環境では直接参加できません。")
-        return false
-    end
-
     -- Discord Webhookへの通知送信
     function InterfaceManager:SendWebhook(title, description)
         local webhookUrl = self.Settings.WebhookURL
@@ -318,17 +172,13 @@ local InterfaceManager = {} do
         end)
     end
 
-    -- サーバー移動（通常Hop / Low Player Hop対応）
-    function InterfaceManager:ServerHop(lowPlayerOnly)
+    -- サーバー移動（Low Player Hop設定対応）
+    function InterfaceManager:ServerHop()
         if self.IsHopping then return end
         self.IsHopping = true
         
         task.spawn(function()
-            if self.Settings.UsePrivateServer and self:JoinPrivateServer() then
-                task.wait(5)
-                self.IsHopping = false
-                return
-            end
+            local lowPlayerOnly = self.Settings.LowPlayerHop == true
 
             local success, result = pcall(function()
                 local url = string.format(
@@ -415,9 +265,7 @@ local InterfaceManager = {} do
             task.wait(3)
             
             pcall(function()
-                if self.Settings.UsePrivateServer and self:CanJoinPrivateServer() then
-                    self:JoinPrivateServer()
-                elseif #game.JobId > 0 then
+                if #game.JobId > 0 then
                     TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, Players.LocalPlayer)
                 else
                     TeleportService:Teleport(game.PlaceId, Players.LocalPlayer)
@@ -468,7 +316,7 @@ local InterfaceManager = {} do
             
             -- 即座にサーバー移動
             task.wait(1)
-            self:ServerHop(false)
+            self:ServerHop()
         end
         
         -- 新規参加プレイヤーの監視
@@ -643,23 +491,11 @@ local InterfaceManager = {} do
             end
         })
 
-        ServerSection:AddToggle("UsePrivateServerToggle", {
-            Title = "Use Saved Server Target",
-            Default = Settings.UsePrivateServer,
+        ServerSection:AddToggle("LowPlayerHopToggle", {
+            Title = "Low Player Hop",
+            Default = Settings.LowPlayerHop,
             Callback = function(Value)
-                Settings.UsePrivateServer = Value
-                InterfaceManager:SaveSettings()
-            end
-        })
-
-        ServerSection:AddInput("PrivateServerCodeInput", {
-            Title = "Server Link / Access Code",
-            Default = Settings.PrivateServerCode,
-            Numeric = false,
-            Finished = true,
-            Placeholder = "share URL or private server code",
-            Callback = function(Value)
-                Settings.PrivateServerCode = Value
+                Settings.LowPlayerHop = Value
                 InterfaceManager:SaveSettings()
             end
         })
@@ -674,23 +510,9 @@ local InterfaceManager = {} do
         })
 
         ServerSection:AddButton({
-            Title = "Low Player Hop",
-            Callback = function()
-                InterfaceManager:ServerHop(true)
-            end
-        })
-
-        ServerSection:AddButton({
             Title = "Server Hop",
             Callback = function()
-                InterfaceManager:ServerHop(false)
-            end
-        })
-
-        ServerSection:AddButton({
-            Title = "Join Saved Server",
-            Callback = function()
-                InterfaceManager:JoinPrivateServer()
+                InterfaceManager:ServerHop()
             end
         })
 

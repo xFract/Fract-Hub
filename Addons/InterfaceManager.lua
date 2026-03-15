@@ -17,6 +17,8 @@ local InterfaceManager = {} do
         FPSCap = 60,
         AutoRejoin = false,
         LowPlayerHop = false,
+        UsePrivateServer = false,
+        PrivateServerCode = "",
         StaffDetector = false,
         WebhookURL = "",
     }
@@ -130,6 +132,27 @@ local InterfaceManager = {} do
         end
     end
 
+    function InterfaceManager:CanJoinPrivateServer()
+        local code = self.Settings.PrivateServerCode
+        return type(code) == "string" and code ~= ""
+    end
+
+    function InterfaceManager:JoinPrivateServer()
+        if not self:CanJoinPrivateServer() then
+            return false
+        end
+
+        local success = pcall(function()
+            TeleportService:TeleportToPrivateServer(
+                game.PlaceId,
+                self.Settings.PrivateServerCode,
+                { Players.LocalPlayer }
+            )
+        end)
+
+        return success
+    end
+
     -- Discord Webhookへの通知送信
     function InterfaceManager:SendWebhook(title, description)
         local webhookUrl = self.Settings.WebhookURL
@@ -167,6 +190,12 @@ local InterfaceManager = {} do
         self.IsHopping = true
         
         task.spawn(function()
+            if self.Settings.UsePrivateServer and self:JoinPrivateServer() then
+                task.wait(5)
+                self.IsHopping = false
+                return
+            end
+
             local success, result = pcall(function()
                 local url = string.format(
                     "https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100",
@@ -252,7 +281,9 @@ local InterfaceManager = {} do
             task.wait(3)
             
             pcall(function()
-                if #game.JobId > 0 then
+                if self.Settings.UsePrivateServer and self:CanJoinPrivateServer() then
+                    self:JoinPrivateServer()
+                elseif #game.JobId > 0 then
                     TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, Players.LocalPlayer)
                 else
                     TeleportService:Teleport(game.PlaceId, Players.LocalPlayer)
@@ -477,7 +508,28 @@ local InterfaceManager = {} do
                 InterfaceManager:SaveSettings()
             end
         })
-        
+
+        ServerSection:AddToggle("UsePrivateServerToggle", {
+            Title = "Use Private Server",
+            Default = Settings.UsePrivateServer,
+            Callback = function(Value)
+                Settings.UsePrivateServer = Value
+                InterfaceManager:SaveSettings()
+            end
+        })
+
+        ServerSection:AddInput("PrivateServerCodeInput", {
+            Title = "Private Server Code",
+            Default = Settings.PrivateServerCode,
+            Numeric = false,
+            Finished = true,
+            Placeholder = "ReservedServerAccessCode",
+            Callback = function(Value)
+                Settings.PrivateServerCode = Value
+                InterfaceManager:SaveSettings()
+            end
+        })
+         
         ServerSection:AddToggle("StaffDetectorToggle", {
             Title = "Staff Detector",
             Default = Settings.StaffDetector,
@@ -498,6 +550,13 @@ local InterfaceManager = {} do
             Title = "Server Hop",
             Callback = function()
                 InterfaceManager:ServerHop(false)
+            end
+        })
+
+        ServerSection:AddButton({
+            Title = "Join Private Server",
+            Callback = function()
+                InterfaceManager:JoinPrivateServer()
             end
         })
 

@@ -14,6 +14,8 @@ local Element = {}
 Element.__index = Element
 Element.__type = "Dropdown"
 
+local CLICK_DRAG_THRESHOLD = 6
+
 function Element:New(Idx, Config)
 	local Library = self.Library
 
@@ -152,6 +154,8 @@ function Element:New(Idx, Config)
 		ScrollBarThickness = 4,
 		BorderSizePixel = 0,
 		CanvasSize = UDim2.fromScale(0, 0),
+		ScrollingDirection = Enum.ScrollingDirection.Y,
+		HorizontalScrollBarInset = Enum.ScrollBarInset.Always,
 	}, {
 		DropdownListLayout,
 	})
@@ -465,33 +469,78 @@ function Element:New(Idx, Config)
 				SetSelTransparency(Selected and 0 or 1)
 			end
 
-			ButtonLabel.InputBegan:Connect(function(Input)
+			local function CommitSelection()
+				local Try = not Selected
+
+				if Dropdown:GetActiveValues() == 1 and not Try and not Config.AllowNull then
+					return
+				end
+
+				if Config.Multi then
+					Selected = Try
+					Dropdown.Value[Value] = Selected and true or nil
+				else
+					Selected = Try
+					Dropdown.Value = Selected and Value or nil
+
+					for _, OtherButton in next, Buttons do
+						OtherButton:UpdateButton()
+					end
+				end
+
+				Table:UpdateButton()
+				Dropdown:Display()
+
+				Library:SafeCallback(Dropdown.Callback, Dropdown.Value)
+				Library:SafeCallback(Dropdown.Changed, Dropdown.Value)
+			end
+
+			local pressInput
+			local pressPosition
+			local pressCanvasPosition
+			local dragging = false
+
+			Creator.AddSignal(Button.InputBegan, function(Input)
 				if
 					Input.UserInputType == Enum.UserInputType.MouseButton1
 					or Input.UserInputType == Enum.UserInputType.Touch
 				then
-					local Try = not Selected
+					pressInput = Input
+					pressPosition = Input.Position
+					pressCanvasPosition = DropdownScrollFrame.CanvasPosition
+					dragging = false
+				end
+			end)
 
-					if Dropdown:GetActiveValues() == 1 and not Try and not Config.AllowNull then
-					else
-						if Config.Multi then
-							Selected = Try
-							Dropdown.Value[Value] = Selected and true or nil
-						else
-							Selected = Try
-							Dropdown.Value = Selected and Value or nil
+			Creator.AddSignal(Button.InputChanged, function(Input)
+				if Input ~= pressInput or not pressPosition then
+					return
+				end
 
-							for _, OtherButton in next, Buttons do
-								OtherButton:UpdateButton()
-							end
-						end
+				local delta = Input.Position - pressPosition
+				local canvasDelta = DropdownScrollFrame.CanvasPosition - pressCanvasPosition
+				if math.abs(delta.X) > CLICK_DRAG_THRESHOLD
+					or math.abs(delta.Y) > CLICK_DRAG_THRESHOLD
+					or math.abs(canvasDelta.X) > 0
+					or math.abs(canvasDelta.Y) > CLICK_DRAG_THRESHOLD
+				then
+					dragging = true
+				end
+			end)
 
-						Table:UpdateButton()
-						Dropdown:Display()
+			Creator.AddSignal(Button.InputEnded, function(Input)
+				if Input ~= pressInput then
+					return
+				end
 
-						Library:SafeCallback(Dropdown.Callback, Dropdown.Value)
-						Library:SafeCallback(Dropdown.Changed, Dropdown.Value)
-					end
+				local shouldCommit = not dragging
+				pressInput = nil
+				pressPosition = nil
+				pressCanvasPosition = nil
+				dragging = false
+
+				if shouldCommit then
+					CommitSelection()
 				end
 			end)
 
